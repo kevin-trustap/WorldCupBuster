@@ -75,3 +75,13 @@ export const WC2026_TEAMS: WCTeam[] = [
 if (WC2026_TEAMS.length !== 48) {
   throw new Error(`Expected 48 WC 2026 teams, got ${WC2026_TEAMS.length}`);
 }
+
+// Map display name → API-Football name when they differ.
+// Populate after running GET /api/admin/teams-check and checking the `missing` array.
+// Example: { 'Congo DR': 'DR Congo' }
+export const API_NAME_OVERRIDES: Record<string, string> = {
+  'United States':          'USA',
+  'Bosnia and Herzegovina': 'Bosnia & Herzegovina',
+  'Czechia':                'Czech Republic',
+  "Côte d'Ivoire":          'Ivory Coast',
+};

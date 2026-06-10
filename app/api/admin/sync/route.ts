@@ -13,6 +13,7 @@ import {
   type ApiEvent,
   type ApiStatTeam,
 } from '@/lib/api-football';
+import { API_NAME_OVERRIDES } from '@/constants/wc2026';
 
 const MAX_FIXTURES_PER_SYNC = 8;
 const DAILY_CALL_LIMIT      = 90;
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
 
       for (const wct of unmapped) {
         const match = apiTeams.find(
-          at => at.team.name.toLowerCase() === wct.name.toLowerCase()
+          at => at.team.name.toLowerCase() === (API_NAME_OVERRIDES[wct.name] ?? wct.name).toLowerCase()
         );
         if (match) {
           await supabase
