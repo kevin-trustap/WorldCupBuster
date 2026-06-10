@@ -35,7 +35,7 @@ export const WC2026_TEAMS: WCTeam[] = [
   { name: 'Netherlands',           confederation: 'UEFA', flag_emoji: '🇳🇱', is_host: false },
   { name: 'Belgium',               confederation: 'UEFA', flag_emoji: '🇧🇪', is_host: false },
   { name: 'Switzerland',           confederation: 'UEFA', flag_emoji: '🇨🇭', is_host: false },
-  { name: 'Italy',                 confederation: 'UEFA', flag_emoji: '🇮🇹', is_host: false },
+  { name: 'Croatia',               confederation: 'UEFA', flag_emoji: '🇭🇷', is_host: false },
   { name: 'Austria',               confederation: 'UEFA', flag_emoji: '🇦🇹', is_host: false },
   { name: 'Czechia',               confederation: 'UEFA', flag_emoji: '🇨🇿', is_host: false },
   { name: 'Bosnia and Herzegovina',confederation: 'UEFA', flag_emoji: '🇧🇦', is_host: false },
@@ -47,12 +47,12 @@ export const WC2026_TEAMS: WCTeam[] = [
   // ── CAF (10) ──────────────────────────────────────
   { name: 'Morocco',               confederation: 'CAF', flag_emoji: '🇲🇦', is_host: false },
   { name: 'Egypt',                 confederation: 'CAF', flag_emoji: '🇪🇬', is_host: false },
-  { name: 'Nigeria',               confederation: 'CAF', flag_emoji: '🇳🇬', is_host: false },
+  { name: 'Algeria',               confederation: 'CAF', flag_emoji: '🇩🇿', is_host: false },
   { name: 'Senegal',               confederation: 'CAF', flag_emoji: '🇸🇳', is_host: false },
-  { name: 'Cameroon',              confederation: 'CAF', flag_emoji: '🇨🇲', is_host: false },
+  { name: 'Congo DR',              confederation: 'CAF', flag_emoji: '🇨🇩', is_host: false },
   { name: "Côte d'Ivoire",        confederation: 'CAF', flag_emoji: '🇨🇮', is_host: false },
   { name: 'Ghana',                 confederation: 'CAF', flag_emoji: '🇬🇭', is_host: false },
-  { name: 'Guinea',                confederation: 'CAF', flag_emoji: '🇬🇳', is_host: false },
+  { name: 'Cape Verde Islands',    confederation: 'CAF', flag_emoji: '🇨🇻', is_host: false },
   { name: 'South Africa',          confederation: 'CAF', flag_emoji: '🇿🇦', is_host: false },
   { name: 'Tunisia',               confederation: 'CAF', flag_emoji: '🇹🇳', is_host: false },
 
@@ -64,7 +64,7 @@ export const WC2026_TEAMS: WCTeam[] = [
   { name: 'Saudi Arabia',          confederation: 'AFC', flag_emoji: '🇸🇦', is_host: false },
   { name: 'Iraq',                  confederation: 'AFC', flag_emoji: '🇮🇶', is_host: false },
   { name: 'Jordan',                confederation: 'AFC', flag_emoji: '🇯🇴', is_host: false },
-  { name: 'China PR',              confederation: 'AFC', flag_emoji: '🇨🇳', is_host: false },
+  { name: 'Qatar',                 confederation: 'AFC', flag_emoji: '🇶🇦', is_host: false },
   { name: 'Uzbekistan',            confederation: 'AFC', flag_emoji: '🇺🇿', is_host: false },
 
   // ── OFC (1) ───────────────────────────────────────
