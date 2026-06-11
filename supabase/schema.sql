@@ -146,7 +146,7 @@ INSERT INTO wc_teams (name, confederation, flag_emoji, is_host) VALUES
   ('Netherlands',            'UEFA', '🇳🇱', FALSE),
   ('Belgium',                'UEFA', '🇧🇪', FALSE),
   ('Switzerland',            'UEFA', '🇨🇭', FALSE),
-  ('Italy',                  'UEFA', '🇮🇹', FALSE),
+  ('Croatia',                'UEFA', '🇭🇷', FALSE),
   ('Austria',                'UEFA', '🇦🇹', FALSE),
   ('Czechia',                'UEFA', '🇨🇿', FALSE),
   ('Bosnia and Herzegovina', 'UEFA', '🇧🇦', FALSE),
@@ -157,12 +157,12 @@ INSERT INTO wc_teams (name, confederation, flag_emoji, is_host) VALUES
   -- CAF (10)
   ('Morocco',                'CAF', '🇲🇦', FALSE),
   ('Egypt',                  'CAF', '🇪🇬', FALSE),
-  ('Nigeria',                'CAF', '🇳🇬', FALSE),
+  ('Algeria',                'CAF', '🇩🇿', FALSE),
   ('Senegal',                'CAF', '🇸🇳', FALSE),
-  ('Cameroon',               'CAF', '🇨🇲', FALSE),
+  ('Congo DR',               'CAF', '🇨🇩', FALSE),
   ('Côte d''Ivoire',        'CAF', '🇨🇮', FALSE),
   ('Ghana',                  'CAF', '🇬🇭', FALSE),
-  ('Guinea',                 'CAF', '🇬🇳', FALSE),
+  ('Cape Verde Islands',     'CAF', '🇨🇻', FALSE),
   ('South Africa',           'CAF', '🇿🇦', FALSE),
   ('Tunisia',                'CAF', '🇹🇳', FALSE),
   -- AFC (9)
@@ -173,7 +173,7 @@ INSERT INTO wc_teams (name, confederation, flag_emoji, is_host) VALUES
   ('Saudi Arabia',           'AFC', '🇸🇦', FALSE),
   ('Iraq',                   'AFC', '🇮🇶', FALSE),
   ('Jordan',                 'AFC', '🇯🇴', FALSE),
-  ('China PR',               'AFC', '🇨🇳', FALSE),
+  ('Qatar',                  'AFC', '🇶🇦', FALSE),
   ('Uzbekistan',             'AFC', '🇺🇿', FALSE),
   -- OFC (1)
   ('New Zealand',            'OFC', '🇳🇿', FALSE);

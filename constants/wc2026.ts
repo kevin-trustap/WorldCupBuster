@@ -84,4 +84,6 @@ export const API_NAME_OVERRIDES: Record<string, string> = {
   'Bosnia and Herzegovina': 'Bosnia & Herzegovina',
   'Czechia':                'Czech Republic',
   "Côte d'Ivoire":          'Ivory Coast',
+  'Congo DR':               'DR Congo',
+  'Cape Verde Islands':     'Cape Verde',
 };
