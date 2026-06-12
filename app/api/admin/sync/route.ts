@@ -261,7 +261,7 @@ async function processFixture(
   if (!groupStage) {
     const ord = getRoundOrdinal(round);
     const homeAdvances = homeWonPSO !== null ? homeWonPSO : homeWon;
-    const newStage = homeAdvances ? ord : ord - 1;
+    const newStage = homeAdvances && round === 'Final' ? 6 : ord;
     if (newStage > homeStats.stage) homeUpdate.stage = newStage;
   }
 
@@ -315,7 +315,7 @@ async function processFixture(
   if (!groupStage) {
     const ord = getRoundOrdinal(round);
     const awayAdvances = homeWonPSO !== null ? !homeWonPSO : awayWon;
-    const newStage = awayAdvances ? ord : ord - 1;
+    const newStage = awayAdvances && round === 'Final' ? 6 : ord;
     if (newStage > awayStats.stage) awayUpdate.stage = newStage;
   }
 
