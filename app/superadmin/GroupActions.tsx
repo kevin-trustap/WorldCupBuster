@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { T } from '@/lib/theme';
 
 type GroupProp = {
   id: string;
@@ -114,18 +115,18 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
     textAlign: 'left',
     fontWeight: 600,
     fontSize: 11,
-    color: '#aaa',
+    color: T.textMuted,
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     paddingBottom: 8,
-    borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+    borderBottom: `0.5px solid ${T.divider}`,
   };
 
   return (
     <div>
       {/* Members table */}
       {members.length === 0 ? (
-        <div style={{ fontSize: 13, color: '#bbb' }}>No members yet.</div>
+        <div style={{ fontSize: 13, color: T.textMuted }}>No members yet.</div>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
@@ -139,7 +140,7 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
             {members.map((m, i) => {
               const teams = memberTeams[m.id];
               const isLast = i === members.length - 1;
-              const rowBorder = isLast ? 'none' : '0.5px solid rgba(0,0,0,0.05)';
+              const rowBorder = isLast ? 'none' : `0.5px solid ${T.divider}`;
               const isEditing = editingMemberId === m.id;
               const isRemoving = removingMemberId === m.id;
 
@@ -153,6 +154,7 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                       borderBottom: rowBorder,
                       paddingRight: 16,
                       whiteSpace: 'nowrap',
+                      color: T.textPrimary,
                     }}
                   >
                     {isEditing ? (
@@ -170,7 +172,9 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                             fontSize: 13,
                             padding: '3px 7px',
                             borderRadius: 6,
-                            border: '1px solid rgba(0,0,0,0.2)',
+                            border: `1px solid ${T.inputBorder}`,
+                            background: T.inputBg,
+                            color: T.textPrimary,
                             width: 140,
                           }}
                         />
@@ -183,8 +187,8 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                             padding: '3px 8px',
                             borderRadius: 5,
                             border: 'none',
-                            background: '#1a1a1a',
-                            color: '#fff',
+                            background: T.textPrimary,
+                            color: '#000',
                             cursor: 'pointer',
                             fontWeight: 600,
                             opacity: savingRename ? 0.5 : 1,
@@ -200,8 +204,9 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                             fontSize: 12,
                             padding: '3px 8px',
                             borderRadius: 5,
-                            border: '0.5px solid rgba(0,0,0,0.2)',
-                            background: '#fff',
+                            border: `0.5px solid ${T.cardBorder}`,
+                            background: T.logoutBg,
+                            color: T.textPrimary,
                             cursor: 'pointer',
                           }}
                         >
@@ -220,7 +225,7 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                             border: 'none',
                             cursor: 'pointer',
                             padding: '0 2px',
-                            color: '#aaa',
+                            color: T.textMuted,
                             fontSize: 13,
                             lineHeight: 1,
                           }}
@@ -233,7 +238,7 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                   <td
                     style={{
                       padding: '8px 0',
-                      color: teams ? '#333' : '#bbb',
+                      color: teams ? T.textSecondary : T.textMuted,
                       borderBottom: rowBorder,
                       verticalAlign: 'middle',
                     }}
@@ -258,7 +263,7 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
-                          color: '#c0392b',
+                          color: T.wsi,
                           fontSize: 15,
                           padding: '0 4px',
                           opacity: isRemoving ? 0.4 : 1,
@@ -277,11 +282,11 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
       )}
 
       {errorMsg && (
-        <div style={{ fontSize: 12, color: '#c0392b', marginTop: 10 }}>{errorMsg}</div>
+        <div style={{ fontSize: 12, color: T.wsi, marginTop: 10 }}>{errorMsg}</div>
       )}
 
       {/* Delete group button */}
-      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+      <div style={{ marginTop: 16, paddingTop: 14, borderTop: `0.5px solid ${T.divider}` }}>
         <button
           onClick={handleDeleteGroup}
           disabled={deleting}
@@ -289,9 +294,9 @@ export default function GroupActions({ group, members, memberTeams }: Props) {
             fontSize: 12,
             padding: '5px 12px',
             borderRadius: 7,
-            border: '0.5px solid rgba(192,57,43,0.35)',
-            background: '#fdf9f9',
-            color: '#c0392b',
+            border: `0.5px solid rgba(230,29,37,0.35)`,
+            background: 'rgba(230,29,37,0.08)',
+            color: T.wsi,
             cursor: 'pointer',
             fontWeight: 500,
             opacity: deleting ? 0.5 : 1,

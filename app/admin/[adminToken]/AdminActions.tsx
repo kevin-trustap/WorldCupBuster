@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { T } from '@/lib/theme';
 
 interface Props {
   adminToken: string;
@@ -67,21 +68,21 @@ export default function AdminActions({ adminToken, inviteCode, assignmentDone, m
           disabled={assignmentDone || memberCount === 0 || memberCount > 48 || assignStatus === 'loading'}
           style={{
             ...btnBase,
-            background: assignmentDone ? '#e0e0e0' : '#1a1a1a',
-            color: assignmentDone ? '#999' : '#fff',
+            background: assignmentDone ? T.disabledBg : T.textPrimary,
+            color: assignmentDone ? T.disabledText : '#000',
             opacity: assignStatus === 'loading' ? 0.6 : 1,
           }}
         >
           {assignmentDone ? '✓ Teams assigned' : assignStatus === 'loading' ? 'Assigning…' : `🎲 Assign teams (${memberCount} member${memberCount !== 1 ? 's' : ''})`}
         </button>
         {!assignmentDone && memberCount === 0 && (
-          <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Waiting for members to join first</div>
+          <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 4 }}>Waiting for members to join first</div>
         )}
         {memberCount > 48 && (
-          <div style={{ fontSize: 12, color: '#c0392b', marginTop: 4 }}>Cannot exceed 48 members</div>
+          <div style={{ fontSize: 12, color: T.wsi, marginTop: 4 }}>Cannot exceed 48 members</div>
         )}
         {assignMsg && (
-          <div style={{ fontSize: 13, marginTop: 6, color: assignStatus === 'error' ? '#c0392b' : '#1d9e75' }}>{assignMsg}</div>
+          <div style={{ fontSize: 13, marginTop: 6, color: assignStatus === 'error' ? T.wsi : T.ci }}>{assignMsg}</div>
         )}
       </div>
 
@@ -90,19 +91,19 @@ export default function AdminActions({ adminToken, inviteCode, assignmentDone, m
         <button
           onClick={handleSync}
           disabled={syncStatus === 'loading'}
-          style={{ ...btnBase, background: '#378ADD', color: '#fff', opacity: syncStatus === 'loading' ? 0.6 : 1 }}
+          style={{ ...btnBase, background: T.blue, color: '#fff', opacity: syncStatus === 'loading' ? 0.6 : 1 }}
         >
           {syncStatus === 'loading' ? 'Syncing…' : '🔄 Sync stats from API-Football'}
         </button>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Uses ~2 API calls per new fixture. Max 90 calls/day.</div>
+        <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 4 }}>Uses ~2 API calls per new fixture. Max 90 calls/day.</div>
         {syncMsg && (
-          <div style={{ fontSize: 13, marginTop: 6, color: syncStatus === 'error' ? '#c0392b' : '#1d9e75' }}>{syncMsg}</div>
+          <div style={{ fontSize: 13, marginTop: 6, color: syncStatus === 'error' ? T.wsi : T.ci }}>{syncMsg}</div>
         )}
       </div>
 
       <a
         href={`/group/${inviteCode}`}
-        style={{ fontSize: 13, color: '#378ADD', textDecoration: 'none' }}
+        style={{ fontSize: 13, color: T.blue, textDecoration: 'none' }}
       >
         → View public leaderboard
       </a>

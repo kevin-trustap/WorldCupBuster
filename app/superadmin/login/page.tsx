@@ -1,3 +1,5 @@
+import { T } from '@/lib/theme';
+
 export default function SuperAdminLoginPage({
   searchParams,
 }: {
@@ -12,36 +14,36 @@ export default function SuperAdminLoginPage({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f4f4f3',
+        background: T.bg,
         fontFamily: 'system-ui, sans-serif',
       }}
     >
       <div
         style={{
-          background: '#fff',
-          border: '0.5px solid rgba(0,0,0,0.12)',
+          background: T.card,
+          border: `0.5px solid ${T.cardBorder}`,
           borderRadius: 16,
           padding: '36px 32px',
           width: '100%',
           maxWidth: 360,
         }}
       >
-        <div style={{ fontSize: 11, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
           WorldCupBuster
         </div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 24px', letterSpacing: '-0.3px' }}>
+        <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 24px', letterSpacing: '-0.3px', color: T.textPrimary }}>
           Super Admin
         </h1>
 
         {hasError && (
           <div
             style={{
-              background: '#fdecea',
-              border: '1px solid #f5c6c4',
+              background: 'rgba(230,29,37,0.2)',
+              border: '1px solid rgba(230,29,37,0.4)',
               borderRadius: 8,
               padding: '10px 14px',
               fontSize: 13,
-              color: '#c0392b',
+              color: T.wsi,
               marginBottom: 18,
             }}
           >
@@ -51,7 +53,7 @@ export default function SuperAdminLoginPage({
 
         <form method="POST" action="/api/superadmin/login">
           <label
-            style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}
+            style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6, color: T.textPrimary }}
           >
             Username
           </label>
@@ -64,15 +66,17 @@ export default function SuperAdminLoginPage({
               width: '100%',
               fontSize: 15,
               padding: '10px 12px',
-              border: '0.5px solid rgba(0,0,0,0.2)',
+              border: `0.5px solid ${T.inputBorder}`,
               borderRadius: 8,
               outline: 'none',
               boxSizing: 'border-box',
               marginBottom: 14,
+              background: T.inputBg,
+              color: T.textPrimary,
             }}
           />
           <label
-            style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}
+            style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6, color: T.textPrimary }}
           >
             Password
           </label>
@@ -85,11 +89,13 @@ export default function SuperAdminLoginPage({
               width: '100%',
               fontSize: 15,
               padding: '10px 12px',
-              border: '0.5px solid rgba(0,0,0,0.2)',
+              border: `0.5px solid ${T.inputBorder}`,
               borderRadius: 8,
               outline: 'none',
               boxSizing: 'border-box',
               marginBottom: 20,
+              background: T.inputBg,
+              color: T.textPrimary,
             }}
           />
           <button
@@ -99,8 +105,8 @@ export default function SuperAdminLoginPage({
               padding: '11px',
               borderRadius: 8,
               border: 'none',
-              background: '#1a1a1a',
-              color: '#fff',
+              background: T.textPrimary,
+              color: '#000',
               fontWeight: 600,
               fontSize: 14,
               cursor: 'pointer',

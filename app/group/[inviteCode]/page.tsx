@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
+import { T } from '@/lib/theme';
 import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry } from './Leaderboards';
 
@@ -94,47 +95,63 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px', fontFamily: 'system-ui, sans-serif' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-          WorldCupBuster
-        </div>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.5px' }}>{group.name}</h1>
-        <div style={{ fontSize: 13, color: '#888' }}>
-          Invite code: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1a1a1a' }}>{group.invite_code}</span>
+      {/* Header + 2026 brand mark */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+            WorldCupBuster
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.5px', color: T.textPrimary }}>{group.name}</h1>
+          <div style={{ fontSize: 13, color: T.textSecondary }}>
+            Invite code: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: T.textPrimary }}>{group.invite_code}</span>
+          </div>
           {lastSync && (
-            <span style={{ marginLeft: 16 }}>
-              · Last updated {new Date(lastSync).toLocaleString()}
-            </span>
+            <div style={{ fontSize: 12, color: T.textMuted, marginTop: 2 }}>
+              Last updated {new Date(lastSync).toLocaleString()}
+            </div>
           )}
+        </div>
+
+        {/* 2026 brand mark — 2×2 grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', lineHeight: 1, userSelect: 'none', pointerEvents: 'none', flexShrink: 0, marginLeft: 16 }}>
+          {['2','0','2','6'].map((digit, i) => (
+            <span key={i} style={{
+              fontSize: 52,
+              fontWeight: 900,
+              color: 'rgba(255,255,255,0.07)',
+              textShadow: '0 0 32px rgba(42,57,141,0.2)',
+              letterSpacing: '-2px',
+              textAlign: 'center',
+            }}>{digit}</span>
+          ))}
         </div>
       </div>
 
       {/* State 1: Solo — first member, no assignment */}
       {!group.assignment_done && members.length <= 1 && (
-        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '32px 24px', marginBottom: 20, textAlign: 'center' }}>
+        <div style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '32px 24px', marginBottom: 20, textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🌍</div>
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>You're the first one here!</div>
-          <div style={{ fontSize: 14, color: '#888', marginBottom: 16 }}>Share the invite code with your friends to get started.</div>
-          <div style={{ display: 'inline-block', background: '#f4f4f3', borderRadius: 10, padding: '10px 20px', fontFamily: 'monospace', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', color: '#1a1a1a', marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8, color: T.textPrimary }}>You&apos;re the first one here!</div>
+          <div style={{ fontSize: 14, color: T.textSecondary, marginBottom: 16 }}>Share the invite code with your friends to get started.</div>
+          <div style={{ display: 'inline-block', background: T.inputBg, borderRadius: 10, padding: '10px 20px', fontFamily: 'monospace', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', color: T.textPrimary, marginBottom: 16 }}>
             {group.invite_code}
           </div>
-          <div style={{ fontSize: 13, color: '#aaa' }}>Once everyone has joined, the admin can assign teams.</div>
+          <div style={{ fontSize: 13, color: T.textMuted }}>Once everyone has joined, the admin can assign teams.</div>
         </div>
       )}
 
       {/* State 2: Multiple members, waiting for assignment */}
       {!group.assignment_done && members.length > 1 && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '20px 24px', marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '20px 24px', marginBottom: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
-            <div style={{ fontWeight: 700, marginBottom: 4 }}>Waiting for team assignment</div>
-            <div style={{ fontSize: 13, color: '#888' }}>
+            <div style={{ fontWeight: 700, marginBottom: 4, color: T.textPrimary }}>Waiting for team assignment</div>
+            <div style={{ fontSize: 13, color: T.textSecondary }}>
               {members.length} member{members.length !== 1 ? 's' : ''} joined — no teams assigned yet
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 16 }}>
               {members.map(m => (
-                <span key={m.id} style={{ background: '#f4f4f3', borderRadius: 99, padding: '4px 12px', fontSize: 13 }}>{m.display_name}</span>
+                <span key={m.id} style={{ background: T.inputBg, color: T.textPrimary, borderRadius: 99, padding: '4px 12px', fontSize: 13 }}>{m.display_name}</span>
               ))}
             </div>
           </div>
@@ -142,30 +159,30 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
           {/* Blank leaderboard preview */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
             {(['🥄 Wooden Spoon Index', '🏆 Champion Index'] as const).map(title => (
-              <div key={title} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '18px 18px 14px', opacity: 0.55 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>
+              <div key={title} style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '18px 18px 14px', opacity: 0.55 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: T.textMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>
                   {title}
                 </div>
                 {members.map((m, rank) => (
-                  <div key={m.id} style={{ padding: '8px 0', borderBottom: rank < members.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none' }}>
+                  <div key={m.id} style={{ padding: '8px 0', borderBottom: rank < members.length - 1 ? `0.5px solid ${T.divider}` : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, color: '#aaa', minWidth: 16, textAlign: 'right' }}>{rank + 1}</span>
-                      <span style={{ fontSize: 18, color: '#ccc' }}>🏳</span>
-                      <span style={{ fontSize: 14, flex: 1, color: '#ccc' }}>TBD</span>
-                      <span style={{ fontSize: 14, color: '#ccc' }}>—</span>
+                      <span style={{ fontSize: 12, color: T.textMuted, minWidth: 16, textAlign: 'right' }}>{rank + 1}</span>
+                      <span style={{ fontSize: 18, color: T.textFaint }}>🏳</span>
+                      <span style={{ fontSize: 14, flex: 1, color: T.textFaint }}>TBD</span>
+                      <span style={{ fontSize: 14, color: T.textFaint }}>—</span>
                     </div>
                     <div style={{ paddingLeft: 24, marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, color: '#ccc' }}>{m.display_name}</span>
+                      <span style={{ fontSize: 12, color: T.textFaint }}>{m.display_name}</span>
                     </div>
                     <div style={{ paddingLeft: 24 }}>
-                      <div style={{ height: 4, background: 'rgba(0,0,0,0.06)', borderRadius: 2 }} />
+                      <div style={{ height: 4, background: T.track, borderRadius: 2 }} />
                     </div>
                   </div>
                 ))}
               </div>
             ))}
           </div>
-          <div style={{ textAlign: 'center', fontSize: 12, color: '#bbb', marginTop: 10, fontStyle: 'italic' }}>
+          <div style={{ textAlign: 'center', fontSize: 12, color: T.textMuted, marginTop: 10, fontStyle: 'italic' }}>
             Scores will appear here once teams are assigned and matches begin
           </div>
         </div>
@@ -176,7 +193,7 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
         <>
           {/* State 3 notice: no sync yet */}
           {lastSync === null && (
-            <div style={{ background: '#f0f9ff', border: '0.5px solid #b3d9f0', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#0369a1' }}>
+            <div style={{ background: T.infoBg, border: `0.5px solid ${T.infoBorder}`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: T.infoText }}>
               {preTournament
                 ? '🗓️ Tournament kicks off 11 June 2026 — scores will appear after the first match sync'
                 : '⏳ Waiting for first match sync — scores will appear once the admin syncs match data'}
@@ -190,7 +207,7 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
       )}
 
       {/* Footer */}
-      <p style={{ fontSize: 11, color: '#ccc', textAlign: 'center', marginTop: 24 }}>
+      <p style={{ fontSize: 11, color: T.textFaint, textAlign: 'center', marginTop: 24 }}>
         WSI = Wooden Spoon Index · CI = Champion Index · Higher WSI = more shame · Higher CI = more glory
       </p>
 

@@ -4,28 +4,29 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { METRICS, CI_METRICS } from '@/lib/wsi';
+import { T } from '@/lib/theme';
 
 const S = {
-  card:  { background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '24px 22px', marginBottom: 16 } as CSSProperties,
-  h2:    { fontSize: 16, fontWeight: 700, margin: '0 0 16px' } as CSSProperties,
-  label: { fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 } as CSSProperties,
-  input: { width: '100%', fontSize: 15, padding: '10px 12px', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: 8, outline: 'none', boxSizing: 'border-box' } as CSSProperties,
+  card:  { background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '24px 22px', marginBottom: 16 } as CSSProperties,
+  h2:    { fontSize: 16, fontWeight: 700, margin: '0 0 16px', color: T.textPrimary } as CSSProperties,
+  label: { fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6, color: T.textPrimary } as CSSProperties,
+  input: { width: '100%', fontSize: 15, padding: '10px 12px', border: `0.5px solid ${T.inputBorder}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', background: T.inputBg, color: T.textPrimary } as CSSProperties,
   btn:   { width: '100%', padding: '11px', borderRadius: 8, border: 'none', fontWeight: 600, fontSize: 14, cursor: 'pointer', marginTop: 12 } as CSSProperties,
-  err:   { fontSize: 13, color: '#c0392b', marginTop: 8 } as CSSProperties,
+  err:   { fontSize: 13, color: T.wsi, marginTop: 8 } as CSSProperties,
 };
 
 function CopyBox({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 4 }}>{label}</div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1, background: '#f4f4f3', borderRadius: 8, padding: '8px 12px', fontSize: 14, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+        <div style={{ flex: 1, background: T.inputBg, borderRadius: 8, padding: '8px 12px', fontSize: 14, fontFamily: 'monospace', wordBreak: 'break-all', color: T.textPrimary }}>
           {value}
         </div>
         <button
           onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-          style={{ padding: '8px 14px', borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.15)', background: '#fff', cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap' }}
+          style={{ padding: '8px 14px', borderRadius: 8, border: `0.5px solid ${T.cardBorder}`, background: T.logoutBg, cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap', color: T.textPrimary }}
         >
           {copied ? '✓ Copied' : 'Copy'}
         </button>
@@ -60,16 +61,16 @@ function CreateGroup() {
     return (
       <div style={S.card}>
         <div style={{ fontSize: 20, marginBottom: 4 }}>🎉 Group created!</div>
-        <div style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>Share the invite code with your friends.</div>
-        <div style={{ background: '#fef9e7', border: '1.5px solid #f39c12', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, color: '#b7770d', marginBottom: 4 }}>⚠️ Save your admin link now</div>
-          <div style={{ fontSize: 13, color: '#7d6608' }}>This link cannot be recovered. Bookmark it or save it somewhere safe before closing this page.</div>
+        <div style={{ fontSize: 13, color: T.textSecondary, marginBottom: 20 }}>Share the invite code with your friends.</div>
+        <div style={{ background: T.warnBg, border: `1.5px solid ${T.warnBorder}`, borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, color: T.warnText, marginBottom: 4 }}>⚠️ Save your admin link now</div>
+          <div style={{ fontSize: 13, color: T.warnBodyText }}>This link cannot be recovered. Bookmark it or save it somewhere safe before closing this page.</div>
         </div>
         <CopyBox label="Invite code (share with friends)" value={result.invite_code} />
         <CopyBox label="Admin link (keep private!)" value={result.admin_url} />
         <a
           href={result.admin_url}
-          style={{ display: 'block', textAlign: 'center', marginTop: 12, padding: '11px', borderRadius: 8, background: '#1a1a1a', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}
+          style={{ display: 'block', textAlign: 'center', marginTop: 12, padding: '11px', borderRadius: 8, background: T.textPrimary, color: '#000', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}
         >
           Open admin panel →
         </a>
@@ -91,7 +92,7 @@ function CreateGroup() {
       />
       {error && <div style={S.err}>{error}</div>}
       <button
-        style={{ ...S.btn, background: name.trim() ? '#1a1a1a' : '#e0e0e0', color: name.trim() ? '#fff' : '#999' }}
+        style={{ ...S.btn, background: name.trim() ? T.textPrimary : T.disabledBg, color: name.trim() ? '#000' : T.disabledText }}
         disabled={!name.trim() || loading}
         onClick={handleCreate}
       >
@@ -146,12 +147,12 @@ function JoinGroup() {
         onChange={e => setName(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && ready && handleJoin()}
       />
-      <div style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
+      <div style={{ fontSize: 12, color: T.textMuted, marginTop: 6 }}>
         Already joined? Enter the same name to return to your group.
       </div>
       {error && <div style={S.err}>{error}</div>}
       <button
-        style={{ ...S.btn, background: ready ? '#c0392b' : '#e0e0e0', color: ready ? '#fff' : '#999' }}
+        style={{ ...S.btn, background: ready ? T.wsi : T.disabledBg, color: ready ? '#fff' : T.disabledText }}
         disabled={!ready || loading}
         onClick={handleJoin}
       >
@@ -171,14 +172,14 @@ function MetricTable({ metrics }: { metrics: Array<{ icon: string; label: string
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '6px 0',
-            borderBottom: i < metrics.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none',
+            borderBottom: i < metrics.length - 1 ? `0.5px solid ${T.divider}` : 'none',
           }}
         >
           <span style={{ fontSize: 15, minWidth: 22 }}>{m.icon}</span>
-          <span style={{ flex: 1, fontSize: 13 }}>{m.label}</span>
+          <span style={{ flex: 1, fontSize: 13, color: T.textPrimary }}>{m.label}</span>
           <span style={{
-            fontFamily: 'monospace', fontSize: 11, color: '#999',
-            background: 'rgba(0,0,0,0.04)', borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap',
+            fontFamily: 'monospace', fontSize: 11, color: T.textSecondary,
+            background: T.inputBg, borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap',
           }}>
             {m.hint}
           </span>
@@ -196,15 +197,15 @@ export default function HomePage() {
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <div style={{ fontSize: 48, marginBottom: 10 }}>🌍🥄</div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.5px' }}>WorldCupBuster</h1>
-        <p style={{ fontSize: 16, color: '#555', margin: '0 auto 18px', maxWidth: 480, lineHeight: 1.6 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.5px', color: T.textPrimary }}>WorldCupBuster</h1>
+        <p style={{ fontSize: 16, color: T.textSecondary, margin: '0 auto 18px', maxWidth: 480, lineHeight: 1.6 }}>
           Get randomly assigned a FIFA World Cup 2026 team. Compete with friends to see whose team earns the most glory — or the most shame.
         </p>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <span style={{ background: '#fdecea', color: '#c0392b', borderRadius: 99, padding: '5px 14px', fontSize: 13, fontWeight: 600 }}>
+          <span style={{ background: T.wsiBadgeBg, color: T.wsi, borderRadius: 99, padding: '5px 14px', fontSize: 13, fontWeight: 600 }}>
             🥄 Wooden Spoon Index
           </span>
-          <span style={{ background: '#e8f8f1', color: '#1d9e75', borderRadius: 99, padding: '5px 14px', fontSize: 13, fontWeight: 600 }}>
+          <span style={{ background: T.ciBadgeBg, color: T.ci, borderRadius: 99, padding: '5px 14px', fontSize: 13, fontWeight: 600 }}>
             🏆 Champion Index
           </span>
         </div>
@@ -214,14 +215,14 @@ export default function HomePage() {
       <div style={{ maxWidth: 520, margin: '0 auto 52px' }}>
         <CreateGroup />
         <JoinGroup />
-        <p style={{ textAlign: 'center', fontSize: 12, color: '#bbb', marginTop: 12 }}>
+        <p style={{ textAlign: 'center', fontSize: 12, color: T.textMuted, marginTop: 12 }}>
           Tournament starts 11 June 2026 · 48 teams · Free to play
         </p>
       </div>
 
       {/* Section divider */}
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           The Two Trophies
         </span>
       </div>
@@ -229,25 +230,25 @@ export default function HomePage() {
       {/* Two trophy cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 20 }}>
 
-        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '22px' }}>
+        <div style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '22px' }}>
           <div style={{ fontSize: 26, marginBottom: 6 }}>🥄</div>
-          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2 }}>Wooden Spoon Index</div>
-          <div style={{ fontSize: 13, color: '#c0392b', marginBottom: 14 }}>Higher score = more shame. Win the spoon.</div>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2, color: T.textPrimary }}>Wooden Spoon Index</div>
+          <div style={{ fontSize: 13, color: T.wsi, marginBottom: 14 }}>Higher score = more shame. Win the spoon.</div>
           <MetricTable metrics={METRICS} />
         </div>
 
-        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '22px' }}>
+        <div style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '22px' }}>
           <div style={{ fontSize: 26, marginBottom: 6 }}>🏆</div>
-          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2 }}>Champion Index</div>
-          <div style={{ fontSize: 13, color: '#1d9e75', marginBottom: 14 }}>Higher score = more glory. Win the cup.</div>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2, color: T.textPrimary }}>Champion Index</div>
+          <div style={{ fontSize: 13, color: T.ci, marginBottom: 14 }}>Higher score = more glory. Win the cup.</div>
           <MetricTable metrics={CI_METRICS} />
         </div>
 
       </div>
 
       {/* How it works */}
-      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 14, padding: '28px 24px' }}>
-        <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 24 }}>
+      <div style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '28px 24px' }}>
+        <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 24 }}>
           How it works
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
@@ -258,8 +259,8 @@ export default function HomePage() {
           ].map(step => (
             <div key={step.title} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 30, marginBottom: 8 }}>{step.icon}</div>
-              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{step.title}</div>
-              <div style={{ fontSize: 13, color: '#777', lineHeight: 1.55 }}>{step.body}</div>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: T.textPrimary }}>{step.title}</div>
+              <div style={{ fontSize: 13, color: T.textSecondary, lineHeight: 1.55 }}>{step.body}</div>
             </div>
           ))}
         </div>

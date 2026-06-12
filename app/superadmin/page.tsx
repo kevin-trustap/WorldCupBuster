@@ -1,4 +1,5 @@
 import { createServerSupabase } from '@/lib/supabase/server';
+import { T } from '@/lib/theme';
 import GroupActions from './GroupActions';
 
 export const dynamic = 'force-dynamic';
@@ -102,7 +103,7 @@ export default async function SuperAdminPage() {
           <div
             style={{
               fontSize: 11,
-              color: '#aaa',
+              color: T.textMuted,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: 4,
@@ -110,7 +111,7 @@ export default async function SuperAdminPage() {
           >
             WorldCupBuster
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.4px' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.4px', color: T.textPrimary }}>
             Super Admin — {groups.length} group{groups.length !== 1 ? 's' : ''}
           </h1>
         </div>
@@ -120,8 +121,9 @@ export default async function SuperAdminPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: '0.5px solid rgba(0,0,0,0.2)',
-              background: '#fff',
+              border: `0.5px solid ${T.logoutBorder}`,
+              background: T.logoutBg,
+              color: T.textPrimary,
               fontSize: 13,
               cursor: 'pointer',
               fontWeight: 500,
@@ -135,12 +137,12 @@ export default async function SuperAdminPage() {
       {groups.length === 0 && (
         <div
           style={{
-            background: '#fff',
-            border: '0.5px solid rgba(0,0,0,0.1)',
+            background: T.card,
+            border: `0.5px solid ${T.cardBorder}`,
             borderRadius: 14,
             padding: '32px',
             textAlign: 'center',
-            color: '#999',
+            color: T.textSecondary,
             fontSize: 14,
           }}
         >
@@ -159,8 +161,8 @@ export default async function SuperAdminPage() {
             <div
               key={group.id}
               style={{
-                background: '#fff',
-                border: '0.5px solid rgba(0,0,0,0.1)',
+                background: T.card,
+                border: `0.5px solid ${T.cardBorder}`,
                 borderRadius: 14,
                 padding: '20px 22px',
               }}
@@ -177,8 +179,8 @@ export default async function SuperAdminPage() {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 17, fontWeight: 700 }}>{group.name}</div>
-                  <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>{group.name}</div>
+                  <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 2 }}>
                     Created {formatDate(group.created_at)} · {gMembers.length} member{gMembers.length !== 1 ? 's' : ''}
                   </div>
                 </div>
@@ -188,8 +190,8 @@ export default async function SuperAdminPage() {
                     fontWeight: 600,
                     padding: '3px 10px',
                     borderRadius: 99,
-                    background: group.assignment_done ? '#e8f8f1' : '#f4f4f3',
-                    color: group.assignment_done ? '#1d9e75' : '#888',
+                    background: group.assignment_done ? 'rgba(60,172,59,0.2)' : T.inputBg,
+                    color: group.assignment_done ? T.ci : T.textSecondary,
                     whiteSpace: 'nowrap',
                   }}
                 >
@@ -207,11 +209,11 @@ export default async function SuperAdminPage() {
                     fontSize: 12,
                     padding: '5px 12px',
                     borderRadius: 7,
-                    border: '0.5px solid rgba(0,0,0,0.15)',
+                    border: `0.5px solid ${T.cardBorder}`,
                     textDecoration: 'none',
-                    color: '#1a1a1a',
+                    color: T.textPrimary,
                     fontWeight: 500,
-                    background: '#f9f9f9',
+                    background: T.inputBg,
                   }}
                 >
                   Public leaderboard →
@@ -224,11 +226,11 @@ export default async function SuperAdminPage() {
                     fontSize: 12,
                     padding: '5px 12px',
                     borderRadius: 7,
-                    border: '0.5px solid rgba(0,0,0,0.15)',
+                    border: `0.5px solid rgba(230,29,37,0.35)`,
                     textDecoration: 'none',
-                    color: '#c0392b',
+                    color: T.wsi,
                     fontWeight: 500,
-                    background: '#fdf9f9',
+                    background: 'rgba(230,29,37,0.08)',
                   }}
                 >
                   Admin panel →
