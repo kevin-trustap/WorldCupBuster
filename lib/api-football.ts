@@ -102,7 +102,10 @@ export function getShotsOnTarget(stats: ApiStatTeam[], teamId: number): number {
   const teamStats = stats.find(s => s.team.id === teamId);
   if (!teamStats) return 0;
   const stat = teamStats.statistics.find(s => s.type === 'Shots on Target');
-  return typeof stat?.value === 'number' ? stat.value : 0;
+  const val = stat?.value;
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseInt(val, 10) || 0;
+  return 0;
 }
 
 // ── Event parsing helpers ──────────────────────────────────────────────────
