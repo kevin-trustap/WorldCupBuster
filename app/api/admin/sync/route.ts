@@ -210,7 +210,7 @@ async function processFixture(
   // ── Home team update ─────────────────────────────────────────────────────
   const homeUpdate: Record<string, number | boolean | string> = {
     conceded:      homeStats.conceded + awayGoals,
-    og:            homeStats.og + homeEvts.ownGoalsCount,
+    og:            homeStats.og + awayEvts.ownGoalsCount,
     yellows:       homeStats.yellows + homeEvts.yellowCount,
     reds:          homeStats.reds + homeEvts.redCount,
     penmiss:       homeStats.penmiss + homeEvts.penMissCount,
@@ -234,16 +234,20 @@ async function processFixture(
   // Fastest goal conceded = goals that entered home net
   const concededTimes = [
     ...awayEvts.goalTimesScored, // away normal goals conceded by home
-    ...homeEvts.ownGoalTimes,   // home's own goals
+    ...awayEvts.ownGoalTimes,   // own goals benefiting away = committed by home = entered home net
   ];
   if (concededTimes.length > 0) {
     const earliest = Math.min(...concededTimes);
     if (earliest < homeStats.fastgoal) homeUpdate.fastgoal = earliest;
   }
 
-  // Fastest goal scored
-  if (homeEvts.goalTimesScored.length > 0) {
-    const earliest = Math.min(...homeEvts.goalTimesScored);
+  // Fastest goal scored (home team's goals = their normal + opponent own goals that benefited them)
+  const allHomeGoalTimes = [
+    ...homeEvts.goalTimesScored,
+    ...homeEvts.ownGoalTimes,   // own goal times where team.id=home = benefited home
+  ];
+  if (allHomeGoalTimes.length > 0) {
+    const earliest = Math.min(...allHomeGoalTimes);
     if (earliest < homeStats.fastscored) homeUpdate.fastscored = earliest;
   }
 
@@ -268,7 +272,7 @@ async function processFixture(
   // ── Away team update ─────────────────────────────────────────────────────
   const awayUpdate: Record<string, number | boolean | string> = {
     conceded:      awayStats.conceded + homeGoals,
-    og:            awayStats.og + awayEvts.ownGoalsCount,
+    og:            awayStats.og + homeEvts.ownGoalsCount,
     yellows:       awayStats.yellows + awayEvts.yellowCount,
     reds:          awayStats.reds + awayEvts.redCount,
     penmiss:       awayStats.penmiss + awayEvts.penMissCount,
@@ -291,15 +295,19 @@ async function processFixture(
 
   const awayConcededTimes = [
     ...homeEvts.goalTimesScored,
-    ...awayEvts.ownGoalTimes,
+    ...homeEvts.ownGoalTimes,  // own goals benefiting home = committed by away = entered away net
   ];
   if (awayConcededTimes.length > 0) {
     const earliest = Math.min(...awayConcededTimes);
     if (earliest < awayStats.fastgoal) awayUpdate.fastgoal = earliest;
   }
 
-  if (awayEvts.goalTimesScored.length > 0) {
-    const earliest = Math.min(...awayEvts.goalTimesScored);
+  const allAwayGoalTimes = [
+    ...awayEvts.goalTimesScored,
+    ...awayEvts.ownGoalTimes,  // own goals benefiting away = entered away's opponent's net
+  ];
+  if (allAwayGoalTimes.length > 0) {
+    const earliest = Math.min(...allAwayGoalTimes);
     if (earliest < awayStats.fastscored) awayUpdate.fastscored = earliest;
   }
 
