@@ -4,6 +4,8 @@ import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry } from './Leaderboards';
+import DailySummary from './DailySummary';
+import { getDailySummary, computeRankChanges } from '@/lib/daily-summary';
 
 export const revalidate = 60; // re-fetch every 60 seconds
 
@@ -81,6 +83,8 @@ async function getLastSync() {
 
 // ── Page ───────────────────────────────────────────────────────────────────
 export default async function GroupPage({ params }: { params: { inviteCode: string } }) {
+  const todayUTCDate = new Date().toISOString().split('T')[0];
+
   const [data, lastSync] = await Promise.all([
     getGroupData(params.inviteCode),
     getLastSync(),
@@ -89,6 +93,12 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
   if (!data) notFound();
 
   const { group, members, leaderboard } = data;
+
+  // Daily summary — only fetched after assignment + first sync
+  const [dailySummaryItems] = group.assignment_done && lastSync !== null
+    ? await Promise.all([getDailySummary(group.id, todayUTCDate)])
+    : [[]];
+  const rankChanges = computeRankChanges(leaderboard, dailySummaryItems);
   const tournamentStart = new Date('2026-06-11');
   const now = new Date();
   const preTournament = now < tournamentStart;
@@ -199,6 +209,16 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
                 : '⏳ Waiting for first match sync — scores will appear once the admin syncs match data'}
             </div>
           )}
+
+          {/* Daily summary */}
+          {lastSync !== null && (
+            <DailySummary
+              items={dailySummaryItems}
+              rankChanges={rankChanges}
+              date={todayUTCDate}
+            />
+          )}
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
             <WSILeaderboard entries={leaderboard} showScores={lastSync !== null} />
             <CILeaderboard  entries={leaderboard} showScores={lastSync !== null} />

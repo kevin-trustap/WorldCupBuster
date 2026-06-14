@@ -14,6 +14,7 @@ import {
   type ApiStatTeam,
 } from '@/lib/api-football';
 import { API_NAME_OVERRIDES } from '@/constants/wc2026';
+import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 
 const MAX_FIXTURES_PER_SYNC = 8;
 const DAILY_CALL_LIMIT      = 90;
@@ -224,21 +225,25 @@ async function processFixture(
     last_synced_at: new Date().toISOString(),
   };
 
-  if (margin > homeStats.bigdefeat && !homeWon) {
-    homeUpdate.bigdefeat = margin;
-  }
-  if (homeWon && margin > homeStats.bigwin) {
-    homeUpdate.bigwin = margin;
-  }
+  const homeSetBigdefeat = margin > homeStats.bigdefeat && !homeWon;
+  const homeSetBigwin    = homeWon && margin > homeStats.bigwin;
+  if (homeSetBigdefeat) homeUpdate.bigdefeat = margin;
+  if (homeSetBigwin)    homeUpdate.bigwin    = margin;
 
   // Fastest goal conceded = goals that entered home net
   const concededTimes = [
     ...awayEvts.goalTimesScored, // away normal goals conceded by home
     ...awayEvts.ownGoalTimes,   // own goals benefiting away = committed by home = entered home net
   ];
+  let homeEarliestConceded: number | null = null;
+  let homeSetFastgoal = false;
   if (concededTimes.length > 0) {
     const earliest = Math.min(...concededTimes);
-    if (earliest < homeStats.fastgoal) homeUpdate.fastgoal = earliest;
+    homeEarliestConceded = earliest;
+    if (earliest < homeStats.fastgoal) {
+      homeUpdate.fastgoal = earliest;
+      homeSetFastgoal = true;
+    }
   }
 
   // Fastest goal scored (home team's goals = their normal + opponent own goals that benefited them)
@@ -246,16 +251,23 @@ async function processFixture(
     ...homeEvts.goalTimesScored,
     ...homeEvts.ownGoalTimes,   // own goal times where team.id=home = benefited home
   ];
+  let homeEarliestScored: number | null = null;
+  let homeSetFastscored = false;
   if (allHomeGoalTimes.length > 0) {
     const earliest = Math.min(...allHomeGoalTimes);
-    if (earliest < homeStats.fastscored) homeUpdate.fastscored = earliest;
+    homeEarliestScored = earliest;
+    if (earliest < homeStats.fastscored) {
+      homeUpdate.fastscored = earliest;
+      homeSetFastscored = true;
+    }
   }
 
   // Group stage points (frozen after 3 matches)
+  let homeMatchPts = 0;
   if (groupStage && !homeStats.group_stage_complete) {
-    const pts = homeWon ? 3 : (homeGoals === awayGoals ? 1 : 0);
-    homeUpdate.points    = homeStats.points + pts;
-    homeUpdate.pts_group = homeStats.pts_group + pts;
+    homeMatchPts = homeWon ? 3 : (homeGoals === awayGoals ? 1 : 0);
+    homeUpdate.points    = homeStats.points + homeMatchPts;
+    homeUpdate.pts_group = homeStats.pts_group + homeMatchPts;
     if (homeStats.matches_played + 1 >= 3) {
       homeUpdate.group_stage_complete = true;
     }
@@ -286,35 +298,46 @@ async function processFixture(
     last_synced_at: new Date().toISOString(),
   };
 
-  if (margin > awayStats.bigdefeat && !awayWon) {
-    awayUpdate.bigdefeat = margin;
-  }
-  if (awayWon && margin > awayStats.bigwin) {
-    awayUpdate.bigwin = margin;
-  }
+  const awaySetBigdefeat = margin > awayStats.bigdefeat && !awayWon;
+  const awaySetBigwin    = awayWon && margin > awayStats.bigwin;
+  if (awaySetBigdefeat) awayUpdate.bigdefeat = margin;
+  if (awaySetBigwin)    awayUpdate.bigwin    = margin;
 
   const awayConcededTimes = [
     ...homeEvts.goalTimesScored,
     ...homeEvts.ownGoalTimes,  // own goals benefiting home = committed by away = entered away net
   ];
+  let awayEarliestConceded: number | null = null;
+  let awaySetFastgoal = false;
   if (awayConcededTimes.length > 0) {
     const earliest = Math.min(...awayConcededTimes);
-    if (earliest < awayStats.fastgoal) awayUpdate.fastgoal = earliest;
+    awayEarliestConceded = earliest;
+    if (earliest < awayStats.fastgoal) {
+      awayUpdate.fastgoal = earliest;
+      awaySetFastgoal = true;
+    }
   }
 
   const allAwayGoalTimes = [
     ...awayEvts.goalTimesScored,
     ...awayEvts.ownGoalTimes,  // own goals benefiting away = entered away's opponent's net
   ];
+  let awayEarliestScored: number | null = null;
+  let awaySetFastscored = false;
   if (allAwayGoalTimes.length > 0) {
     const earliest = Math.min(...allAwayGoalTimes);
-    if (earliest < awayStats.fastscored) awayUpdate.fastscored = earliest;
+    awayEarliestScored = earliest;
+    if (earliest < awayStats.fastscored) {
+      awayUpdate.fastscored = earliest;
+      awaySetFastscored = true;
+    }
   }
 
+  let awayMatchPts = 0;
   if (groupStage && !awayStats.group_stage_complete) {
-    const pts = awayWon ? 3 : (homeGoals === awayGoals ? 1 : 0);
-    awayUpdate.points    = awayStats.points + pts;
-    awayUpdate.pts_group = awayStats.pts_group + pts;
+    awayMatchPts = awayWon ? 3 : (homeGoals === awayGoals ? 1 : 0);
+    awayUpdate.points    = awayStats.points + awayMatchPts;
+    awayUpdate.pts_group = awayStats.pts_group + awayMatchPts;
     if (awayStats.matches_played + 1 >= 3) {
       awayUpdate.group_stage_complete = true;
     }
@@ -327,9 +350,80 @@ async function processFixture(
     if (newStage > awayStats.stage) awayUpdate.stage = newStage;
   }
 
+  // ── Compute WSI/CI deltas ────────────────────────────────────────────────
+  const newHomeStats = { ...homeStats, ...homeUpdate } as unknown as TeamStats & TeamCIStats;
+  const newAwayStats = { ...awayStats, ...awayUpdate } as unknown as TeamStats & TeamCIStats;
+
+  const homeWSIDelta = Math.round((teamWSI(newHomeStats) - teamWSI(homeStats)) * 10) / 10;
+  const homeCIDelta  = Math.round((teamCI(newHomeStats)  - teamCI(homeStats))  * 10) / 10;
+  const awayWSIDelta = Math.round((teamWSI(newAwayStats) - teamWSI(awayStats)) * 10) / 10;
+  const awayCIDelta  = Math.round((teamCI(newAwayStats)  - teamCI(awayStats))  * 10) / 10;
+
+  const matchDate = fixture.fixture.date.split('T')[0];
+
   // ── Persist ──────────────────────────────────────────────────────────────
   await Promise.all([
     supabase.from('team_stats').update(homeUpdate).eq('team_id', homeId),
     supabase.from('team_stats').update(awayUpdate).eq('team_id', awayId),
+    supabase.from('fixtures').upsert({
+      fixture_id:   fixture.fixture.id,
+      home_team_id: homeId,
+      away_team_id: awayId,
+      home_goals:   homeGoals,
+      away_goals:   awayGoals,
+      match_date:   matchDate,
+      round,
+    }),
+  ]);
+
+  await supabase.from('fixture_team_stats').upsert([
+    {
+      fixture_id:       fixture.fixture.id,
+      team_id:          homeId,
+      wsi_delta:        homeWSIDelta,
+      ci_delta:         homeCIDelta,
+      goals_for:        homeGoals,
+      goals_against:    awayGoals,
+      match_points:     homeMatchPts,
+      yellow_cards:     homeEvts.yellowCount,
+      red_cards:        homeEvts.redCount,
+      own_goals:        awayEvts.ownGoalsCount, // own goals that entered home net
+      pen_missed:       homeEvts.penMissCount,
+      pen_scored:       homeEvts.penGoalCount,
+      clean_sheet:      awayGoals === 0,
+      shots_on_target:  homeSoT,
+      set_bigdefeat:    homeSetBigdefeat,
+      defeat_margin:    homeSetBigdefeat ? margin : 0,
+      set_bigwin:       homeSetBigwin,
+      win_margin:       homeSetBigwin ? margin : 0,
+      set_fastgoal:     homeSetFastgoal,
+      fastgoal_minute:  homeEarliestConceded,
+      set_fastscored:   homeSetFastscored,
+      fastscored_minute: homeEarliestScored,
+    },
+    {
+      fixture_id:       fixture.fixture.id,
+      team_id:          awayId,
+      wsi_delta:        awayWSIDelta,
+      ci_delta:         awayCIDelta,
+      goals_for:        awayGoals,
+      goals_against:    homeGoals,
+      match_points:     awayMatchPts,
+      yellow_cards:     awayEvts.yellowCount,
+      red_cards:        awayEvts.redCount,
+      own_goals:        homeEvts.ownGoalsCount, // own goals that entered away net
+      pen_missed:       awayEvts.penMissCount,
+      pen_scored:       awayEvts.penGoalCount,
+      clean_sheet:      homeGoals === 0,
+      shots_on_target:  awaySoT,
+      set_bigdefeat:    awaySetBigdefeat,
+      defeat_margin:    awaySetBigdefeat ? margin : 0,
+      set_bigwin:       awaySetBigwin,
+      win_margin:       awaySetBigwin ? margin : 0,
+      set_fastgoal:     awaySetFastgoal,
+      fastgoal_minute:  awayEarliestConceded,
+      set_fastscored:   awaySetFastscored,
+      fastscored_minute: awayEarliestScored,
+    },
   ]);
 }
