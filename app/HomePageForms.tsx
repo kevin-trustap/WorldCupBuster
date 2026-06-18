@@ -194,8 +194,8 @@ export default function HomePageForms() {
     <>
       {/* Create / Join forms */}
       <div style={{ maxWidth: 520, margin: '0 auto 52px' }}>
-        <CreateGroup />
-        <JoinGroup />
+        <div id="create"><CreateGroup /></div>
+        <div id="join"><JoinGroup /></div>
         <p style={{ textAlign: 'center', fontSize: 12, color: T.textMuted, marginTop: 12 }}>
           Tournament starts 11 June 2026 · 48 teams · Free to play
         </p>

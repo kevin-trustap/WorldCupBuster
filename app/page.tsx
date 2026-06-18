@@ -1,6 +1,9 @@
 import { T } from '@/lib/theme';
 import HomePageForms from './HomePageForms';
 import TodaysMatches from './TodaysMatches';
+import PublicTeamLeaderboards from '@/components/PublicTeamLeaderboards';
+
+export const revalidate = 60;
 
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function HomePage() {
@@ -22,10 +25,21 @@ export default function HomePage() {
             🏆 Champion Index
           </span>
         </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
+          <a href="#create" style={{ padding: '10px 22px', borderRadius: 8, background: T.blue, color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
+            Create a group
+          </a>
+          <a href="#join" style={{ padding: '10px 22px', borderRadius: 8, background: 'transparent', color: T.blue, textDecoration: 'none', fontWeight: 600, fontSize: 14, border: `1.5px solid ${T.blue}` }}>
+            Join a group
+          </a>
+        </div>
       </div>
 
       {/* Today's Matches — only shown once fixtures table is populated */}
       <TodaysMatches />
+
+      {/* Public team standings — team-only, no group/member data */}
+      <PublicTeamLeaderboards />
 
       {/* Client forms + trophy cards + how it works */}
       <HomePageForms />
