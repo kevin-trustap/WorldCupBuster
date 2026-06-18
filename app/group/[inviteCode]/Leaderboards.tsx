@@ -4,6 +4,33 @@ import { useState } from 'react';
 import { METRICS, CI_METRICS, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 
+export interface FixtureDetail {
+  fixtureId: number;
+  opponentId: number;
+  opponentName: string;
+  opponentFlag: string;
+  matchDate: string;
+  isHome: boolean;
+  goalsFor: number;
+  goalsAgainst: number;
+  matchPoints: number;       // 3=W, 1=D, 0=L
+  yellowCards: number;
+  redCards: number;
+  ownGoals: number;
+  penMissed: number;
+  penScored: number;
+  cleanSheet: boolean;
+  shotsOnTarget: number;
+  setBigDefeat: boolean;
+  defeatMargin: number;
+  setBigWin: boolean;
+  winMargin: number;
+  setFastGoal: boolean;
+  fastGoalMinute: number | null;
+  setFastScored: boolean;
+  fastScoredMinute: number | null;
+}
+
 export interface TeamEntry {
   teamId: number;
   teamName: string;
@@ -12,10 +39,69 @@ export interface TeamEntry {
   wsiScore: number;
   ciScore: number;
   stats: TeamStats & TeamCIStats;
+  fixtures?: FixtureDetail[];
+}
+
+// ── Fixture attribution helpers ─────────────────────────────────────────────
+function getWSIFixtureLines(key: string, fixtures: FixtureDetail[]): string[] | null {
+  switch (key) {
+    case 'conceded':
+      return fixtures.filter(f => f.goalsAgainst > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.goalsAgainst}`);
+    case 'yellows':
+      return fixtures.filter(f => f.yellowCards > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.yellowCards}`);
+    case 'reds':
+      return fixtures.filter(f => f.redCards > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.redCards}`);
+    case 'og':
+      return fixtures.filter(f => f.ownGoals > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.ownGoals}`);
+    case 'penmiss':
+      return fixtures.filter(f => f.penMissed > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.penMissed}`);
+    case 'bigdefeat':
+      return fixtures.filter(f => f.setBigDefeat)
+        .map(f => `vs ${f.opponentFlag} ${f.opponentName}`);
+    case 'fastgoal':
+      return fixtures.filter(f => f.setFastGoal)
+        .map(f => `vs ${f.opponentFlag} ${f.opponentName} · min ${f.fastGoalMinute}`);
+    case 'points':
+      return fixtures.map(f => `${f.opponentFlag} ${f.matchPoints === 3 ? 'W' : f.matchPoints === 1 ? 'D' : 'L'}`);
+    default:
+      return null;
+  }
+}
+
+function getCIFixtureLines(key: string, fixtures: FixtureDetail[]): string[] | null {
+  switch (key) {
+    case 'scored':
+      return fixtures.filter(f => f.goalsFor > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.goalsFor}`);
+    case 'penscored':
+      return fixtures.filter(f => f.penScored > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.penScored}`);
+    case 'cleansheets':
+      return fixtures.filter(f => f.cleanSheet)
+        .map(f => `vs ${f.opponentFlag} ${f.opponentName}`);
+    case 'shotsontarget':
+      return fixtures.filter(f => f.shotsOnTarget > 0)
+        .map(f => `${f.opponentFlag} ${f.opponentName} ${f.shotsOnTarget}`);
+    case 'bigwin':
+      return fixtures.filter(f => f.setBigWin)
+        .map(f => `vs ${f.opponentFlag} ${f.opponentName}`);
+    case 'fastscored':
+      return fixtures.filter(f => f.setFastScored)
+        .map(f => `vs ${f.opponentFlag} ${f.opponentName} · min ${f.fastScoredMinute}`);
+    case 'pts_group':
+      return fixtures.map(f => `${f.opponentFlag} ${f.matchPoints === 3 ? 'W' : f.matchPoints === 1 ? 'D' : 'L'}`);
+    default:
+      return null;
+  }
 }
 
 // ── Compact stat breakdown ─────────────────────────────────────────────────
-function WSIBreakdown({ stats }: { stats: TeamStats }) {
+function WSIBreakdown({ stats, fixtures }: { stats: TeamStats; fixtures?: FixtureDetail[] }) {
   const rows = METRICS
     .map(m => ({ m, contribution: m.compute(stats[m.key as keyof TeamStats] as number) }))
     .filter(({ contribution }) => contribution > 0);
@@ -30,23 +116,43 @@ function WSIBreakdown({ stats }: { stats: TeamStats }) {
 
   return (
     <div style={{ paddingLeft: 24, paddingTop: 6, paddingBottom: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {rows.map(({ m, contribution }) => (
-        <div key={m.key as string} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, minWidth: 16 }}>{m.icon}</span>
-          <span style={{ flex: 1, fontSize: 11, color: T.textSecondary }}>{m.label}</span>
-          <span style={{ fontSize: 11, color: T.textMuted, fontFamily: 'monospace', marginRight: 8 }}>
-            {m.display(stats[m.key as keyof TeamStats] as number)}
-          </span>
-          <span style={{ fontSize: 11, color: T.wsi, fontFamily: 'monospace', minWidth: 32, textAlign: 'right' }}>
-            +{contribution % 1 === 0 ? contribution.toFixed(0) : contribution.toFixed(1)}
-          </span>
-        </div>
-      ))}
+      {rows.map(({ m, contribution }) => {
+        const key = m.key as string;
+        const lines = fixtures ? getWSIFixtureLines(key, fixtures) : null;
+        return (
+          <div key={key}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, minWidth: 16 }}>{m.icon}</span>
+              <span style={{ flex: 1, fontSize: 11, color: T.textSecondary }}>{m.label}</span>
+              <span style={{ fontSize: 11, color: T.textMuted, fontFamily: 'monospace', marginRight: 8 }}>
+                {m.display(stats[m.key as keyof TeamStats] as number)}
+              </span>
+              <span style={{ fontSize: 11, color: T.wsi, fontFamily: 'monospace', minWidth: 32, textAlign: 'right' }}>
+                +{contribution % 1 === 0 ? contribution.toFixed(0) : contribution.toFixed(1)}
+              </span>
+            </div>
+            {lines && lines.length > 0 && (
+              <div style={{ paddingLeft: 22, paddingBottom: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {lines.slice(0, 4).map((line, i) => (
+                  <span key={i} style={{ fontSize: 10, color: T.textMuted, background: T.inputBg, borderRadius: 4, padding: '1px 5px' }}>
+                    {line}
+                  </span>
+                ))}
+                {lines.length > 4 && (
+                  <span style={{ fontSize: 10, color: T.textFaint, padding: '1px 3px' }}>
+                    +{lines.length - 4} more
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function CIBreakdown({ stats }: { stats: TeamCIStats }) {
+function CIBreakdown({ stats, fixtures }: { stats: TeamCIStats; fixtures?: FixtureDetail[] }) {
   const rows = CI_METRICS
     .map(m => ({ m, contribution: m.compute(stats[m.key as keyof TeamCIStats] as number) }))
     .filter(({ contribution }) => contribution > 0);
@@ -61,18 +167,38 @@ function CIBreakdown({ stats }: { stats: TeamCIStats }) {
 
   return (
     <div style={{ paddingLeft: 24, paddingTop: 6, paddingBottom: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {rows.map(({ m, contribution }) => (
-        <div key={m.key as string} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, minWidth: 16 }}>{m.icon}</span>
-          <span style={{ flex: 1, fontSize: 11, color: T.textSecondary }}>{m.label}</span>
-          <span style={{ fontSize: 11, color: T.textMuted, fontFamily: 'monospace', marginRight: 8 }}>
-            {m.display(stats[m.key as keyof TeamCIStats] as number)}
-          </span>
-          <span style={{ fontSize: 11, color: T.ci, fontFamily: 'monospace', minWidth: 32, textAlign: 'right' }}>
-            +{contribution % 1 === 0 ? contribution.toFixed(0) : contribution.toFixed(1)}
-          </span>
-        </div>
-      ))}
+      {rows.map(({ m, contribution }) => {
+        const key = m.key as string;
+        const lines = fixtures ? getCIFixtureLines(key, fixtures) : null;
+        return (
+          <div key={key}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, minWidth: 16 }}>{m.icon}</span>
+              <span style={{ flex: 1, fontSize: 11, color: T.textSecondary }}>{m.label}</span>
+              <span style={{ fontSize: 11, color: T.textMuted, fontFamily: 'monospace', marginRight: 8 }}>
+                {m.display(stats[m.key as keyof TeamCIStats] as number)}
+              </span>
+              <span style={{ fontSize: 11, color: T.ci, fontFamily: 'monospace', minWidth: 32, textAlign: 'right' }}>
+                +{contribution % 1 === 0 ? contribution.toFixed(0) : contribution.toFixed(1)}
+              </span>
+            </div>
+            {lines && lines.length > 0 && (
+              <div style={{ paddingLeft: 22, paddingBottom: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {lines.slice(0, 4).map((line, i) => (
+                  <span key={i} style={{ fontSize: 10, color: T.textMuted, background: T.inputBg, borderRadius: 4, padding: '1px 5px' }}>
+                    {line}
+                  </span>
+                ))}
+                {lines.length > 4 && (
+                  <span style={{ fontSize: 10, color: T.textFaint, padding: '1px 3px' }}>
+                    +{lines.length - 4} more
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -122,7 +248,7 @@ export function WSILeaderboard({ entries, showScores = true }: { entries: TeamEn
             </div>
             {expanded && (
               <div style={{ borderTop: `0.5px solid ${T.divider}`, marginBottom: 6 }}>
-                <WSIBreakdown stats={entry.stats} />
+                <WSIBreakdown stats={entry.stats} fixtures={entry.fixtures} />
               </div>
             )}
           </div>
@@ -186,7 +312,7 @@ export function CILeaderboard({ entries, showScores = true }: { entries: TeamEnt
             </div>
             {expanded && (
               <div style={{ borderTop: `0.5px solid ${T.divider}`, marginBottom: 6 }}>
-                <CIBreakdown stats={entry.stats} />
+                <CIBreakdown stats={entry.stats} fixtures={entry.fixtures} />
               </div>
             )}
           </div>

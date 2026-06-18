@@ -3,7 +3,7 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import ScoringBreakdown from './ScoringBreakdown';
-import { WSILeaderboard, CILeaderboard, type TeamEntry } from './Leaderboards';
+import { WSILeaderboard, CILeaderboard, type TeamEntry, type FixtureDetail } from './Leaderboards';
 import DailySummary from './DailySummary';
 import { getDailySummary, computeRankChanges } from '@/lib/daily-summary';
 
@@ -65,7 +65,71 @@ async function getGroupData(inviteCode: string) {
     };
   });
 
-  return { group, members: members ?? [], leaderboard };
+  // Fetch per-fixture stats for all teams in this group
+  const teamIds = leaderboard.map(e => e.teamId);
+
+  const [{ data: fixtureRows }, { data: allTeams }] = await Promise.all([
+    supabase
+      .from('fixture_team_stats')
+      .select(`
+        team_id, goals_for, goals_against, match_points,
+        yellow_cards, red_cards, own_goals, pen_missed, pen_scored,
+        clean_sheet, shots_on_target,
+        set_bigdefeat, defeat_margin, set_bigwin, win_margin,
+        set_fastgoal, fastgoal_minute, set_fastscored, fastscored_minute,
+        fixtures!inner(fixture_id, home_team_id, away_team_id, match_date, round)
+      `)
+      .in('team_id', teamIds),
+    supabase.from('wc_teams').select('id, name, flag_emoji'),
+  ]);
+
+  const teamLookup = new Map<number, { name: string; flag_emoji: string }>(
+    (allTeams ?? []).map(t => [t.id, { name: t.name ?? '', flag_emoji: t.flag_emoji ?? '🏳' }])
+  );
+
+  const fixturesByTeam = new Map<number, FixtureDetail[]>();
+  for (const row of (fixtureRows ?? [])) {
+    const fixture = row.fixtures as unknown as { fixture_id: number; home_team_id: number; away_team_id: number; match_date: string };
+    const teamId = row.team_id;
+    const opponentId = fixture.home_team_id === teamId ? fixture.away_team_id : fixture.home_team_id;
+    const opponent = teamLookup.get(opponentId) ?? { name: 'Unknown', flag_emoji: '🏳' };
+
+    const detail: FixtureDetail = {
+      fixtureId:        fixture.fixture_id,
+      opponentId,
+      opponentName:     opponent.name,
+      opponentFlag:     opponent.flag_emoji,
+      matchDate:        fixture.match_date,
+      isHome:           fixture.home_team_id === teamId,
+      goalsFor:         row.goals_for ?? 0,
+      goalsAgainst:     row.goals_against ?? 0,
+      matchPoints:      row.match_points ?? 0,
+      yellowCards:      row.yellow_cards ?? 0,
+      redCards:         row.red_cards ?? 0,
+      ownGoals:         row.own_goals ?? 0,
+      penMissed:        row.pen_missed ?? 0,
+      penScored:        row.pen_scored ?? 0,
+      cleanSheet:       row.clean_sheet ?? false,
+      shotsOnTarget:    row.shots_on_target ?? 0,
+      setBigDefeat:     row.set_bigdefeat ?? false,
+      defeatMargin:     row.defeat_margin ?? 0,
+      setBigWin:        row.set_bigwin ?? false,
+      winMargin:        row.win_margin ?? 0,
+      setFastGoal:      row.set_fastgoal ?? false,
+      fastGoalMinute:   row.fastgoal_minute ?? null,
+      setFastScored:    row.set_fastscored ?? false,
+      fastScoredMinute: row.fastscored_minute ?? null,
+    };
+
+    if (!fixturesByTeam.has(teamId)) fixturesByTeam.set(teamId, []);
+    fixturesByTeam.get(teamId)!.push(detail);
+  }
+
+  return {
+    group,
+    members: members ?? [],
+    leaderboard: leaderboard.map(e => ({ ...e, fixtures: fixturesByTeam.get(e.teamId) ?? [] })),
+  };
 }
 
 // ── Last sync time ─────────────────────────────────────────────────────────
