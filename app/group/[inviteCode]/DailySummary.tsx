@@ -17,16 +17,17 @@ function fmtDelta(v: number): string {
 }
 
 function wsiNarrative(item: DailySummaryItem): string {
+  if (item.totalWSIDelta === 0) return 'no WSI impact';
   const parts: string[] = [];
   const totalConceded = item.teams.reduce((s, t) => s + t.goals_against, 0);
   if (totalConceded > 0) parts.push(`conceded ${totalConceded} goal${totalConceded !== 1 ? 's' : ''}`);
 
-  if (parts.length === 0 && item.totalWSIDelta === 0) return 'no WSI activity';
   if (parts.length === 0) return `${fmtDelta(item.totalWSIDelta)} WSI shame pts`;
   return `${parts.join(', ')}, adding ${fmtDelta(item.totalWSIDelta)} WSI shame pts`;
 }
 
 function ciNarrative(item: DailySummaryItem): string {
+  if (item.totalCIDelta === 0) return 'no CI impact';
   const parts: string[] = [];
   const totalScored = item.teams.reduce((s, t) => s + t.goals_for, 0);
   const cleanSheets = item.teams.filter(t => t.goals_against === 0).length;
@@ -34,7 +35,6 @@ function ciNarrative(item: DailySummaryItem): string {
   if (totalScored > 0) parts.push(`scored ${totalScored} goal${totalScored !== 1 ? 's' : ''}`);
   if (cleanSheets > 0) parts.push(`${cleanSheets === item.teams.length ? 'clean sheet' : `${cleanSheets} clean sheet${cleanSheets !== 1 ? 's' : ''}`}`);
 
-  if (parts.length === 0 && item.totalCIDelta === 0) return 'no CI activity';
   if (parts.length === 0) return `${fmtDelta(item.totalCIDelta)} glory pts`;
   return `${parts.join(' with ')}, earning ${fmtDelta(item.totalCIDelta)} glory pts`;
 }
@@ -92,7 +92,7 @@ export default function DailySummary({ items, rankChanges, date }: Props) {
                 <div style={{ fontSize: 10, fontWeight: 700, color: T.wsi, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
                   🥄 WSI Race
                 </div>
-                {wsiItems.filter(i => i.totalWSIDelta !== 0).length === 0 ? (
+                {wsiItems.length === 0 ? (
                   <div style={{ fontSize: 12, color: T.textMuted, fontStyle: 'italic' }}>No WSI changes today</div>
                 ) : (
                   wsiItems.map(item => (
@@ -129,7 +129,7 @@ export default function DailySummary({ items, rankChanges, date }: Props) {
                 <div style={{ fontSize: 10, fontWeight: 700, color: T.ci, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
                   🏆 CI Race
                 </div>
-                {ciItems.filter(i => i.totalCIDelta !== 0).length === 0 ? (
+                {ciItems.length === 0 ? (
                   <div style={{ fontSize: 12, color: T.textMuted, fontStyle: 'italic' }}>No CI changes today</div>
                 ) : (
                   ciItems.map(item => (
