@@ -4,8 +4,8 @@ import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry, type FixtureDetail } from './Leaderboards';
-import DailySummary from './DailySummary';
-import { getDailySummary, computeRankChanges } from '@/lib/daily-summary';
+import DailySummary from '@/components/DailySummary';
+import { getDailySummary, getTodaysFixtures, computeRankChanges } from '@/lib/daily-summary';
 
 export const revalidate = 60; // re-fetch every 60 seconds
 
@@ -159,9 +159,12 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
   const { group, members, leaderboard } = data;
 
   // Daily summary — only fetched after assignment + first sync
-  const [dailySummaryItems] = group.assignment_done && lastSync !== null
-    ? await Promise.all([getDailySummary(group.id, todayUTCDate)])
-    : [[]];
+  const [dailySummaryItems, todaysFixtures] = group.assignment_done && lastSync !== null
+    ? await Promise.all([
+        getDailySummary(group.id, todayUTCDate),
+        getTodaysFixtures(todayUTCDate),
+      ])
+    : [[], []];
   const rankChanges = computeRankChanges(leaderboard, dailySummaryItems);
   const tournamentStart = new Date('2026-06-11');
   const now = new Date();
@@ -277,9 +280,11 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
           {/* Daily summary */}
           {lastSync !== null && (
             <DailySummary
+              fixtures={todaysFixtures}
               items={dailySummaryItems}
               rankChanges={rankChanges}
               date={todayUTCDate}
+              groupId={group.id}
             />
           )}
 

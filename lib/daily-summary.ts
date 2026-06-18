@@ -1,6 +1,95 @@
 import { createServerSupabase } from '@/lib/supabase/server';
 import type { TeamEntry } from '@/app/group/[inviteCode]/Leaderboards';
 
+export interface TodaysFixture {
+  fixtureId: number;
+  round: string;
+  homeGoals: number;
+  awayGoals: number;
+  homeTeam: { name: string; flag_emoji: string };
+  awayTeam: { name: string; flag_emoji: string };
+}
+
+export async function getTodaysFixtures(date: string): Promise<TodaysFixture[]> {
+  const supabase = createServerSupabase();
+
+  const { data: fixtures } = await supabase
+    .from('fixtures')
+    .select('fixture_id, round, home_goals, away_goals, home_team_id, away_team_id')
+    .eq('match_date', date)
+    .order('fixture_id');
+
+  if (!fixtures?.length) return [];
+
+  const teamIds = Array.from(new Set(fixtures.flatMap(f => [f.home_team_id, f.away_team_id]).filter(Boolean) as number[]));
+  const { data: teams } = await supabase
+    .from('wc_teams')
+    .select('id, name, flag_emoji')
+    .in('id', teamIds);
+
+  const teamMap = new Map(teams?.map(t => [t.id as number, { name: t.name as string, flag_emoji: t.flag_emoji as string }]) ?? []);
+
+  return fixtures
+    .map(f => ({
+      fixtureId: f.fixture_id as number,
+      round:     f.round as string,
+      homeGoals: f.home_goals as number,
+      awayGoals: f.away_goals as number,
+      homeTeam:  teamMap.get(f.home_team_id as number),
+      awayTeam:  teamMap.get(f.away_team_id as number),
+    }))
+    .filter((f): f is TodaysFixture => !!(f.homeTeam && f.awayTeam));
+}
+
+export async function getPublicDailyTeamStats(date: string): Promise<DailySummaryItem[]> {
+  const supabase = createServerSupabase();
+
+  const { data: todayFixtures } = await supabase
+    .from('fixtures')
+    .select('fixture_id')
+    .eq('match_date', date);
+
+  if (!todayFixtures?.length) return [];
+
+  const todayFixtureIds = todayFixtures.map(f => f.fixture_id as number);
+
+  const { data: fixtureStats } = await supabase
+    .from('fixture_team_stats')
+    .select('team_id, wsi_delta, ci_delta, goals_for, goals_against, fixture_id')
+    .in('fixture_id', todayFixtureIds);
+
+  if (!fixtureStats?.length) return [];
+
+  const activeTeamIds = Array.from(new Set(fixtureStats.map(s => s.team_id as number)));
+  const { data: teams } = await supabase
+    .from('wc_teams')
+    .select('id, name, flag_emoji')
+    .in('id', activeTeamIds);
+
+  const teamMap = new Map(teams?.map(t => [t.id as number, { name: t.name as string, flag_emoji: t.flag_emoji as string }]) ?? []);
+
+  const result: DailySummaryItem[] = [];
+  for (const row of fixtureStats) {
+    const teamInfo = teamMap.get(row.team_id as number);
+    if (!teamInfo) continue;
+    result.push({
+      memberName:    teamInfo.name,
+      teams: [{
+        teamId:       row.team_id as number,
+        teamName:     teamInfo.name,
+        flagEmoji:    teamInfo.flag_emoji,
+        wsiDelta:     Number(row.wsi_delta),
+        ciDelta:      Number(row.ci_delta),
+        goals_for:    row.goals_for as number,
+        goals_against: row.goals_against as number,
+      }],
+      totalWSIDelta: Number(row.wsi_delta),
+      totalCIDelta:  Number(row.ci_delta),
+    });
+  }
+  return result;
+}
+
 export interface DailySummaryTeam {
   teamId: number;
   teamName: string;

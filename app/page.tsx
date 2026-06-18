@@ -1,6 +1,6 @@
 import { T } from '@/lib/theme';
 import HomePageForms from './HomePageForms';
-import TodaysMatches from './TodaysMatches';
+import TodaysSummaryPublic from './TodaysSummaryPublic';
 import PublicTeamLeaderboards from '@/components/PublicTeamLeaderboards';
 
 export const revalidate = 60;
@@ -35,8 +35,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Today's Matches — only shown once fixtures table is populated */}
-      <TodaysMatches />
+      {/* Today's summary — match results + WSI/CI team impact */}
+      <TodaysSummaryPublic />
 
       {/* Public team standings — team-only, no group/member data */}
       <PublicTeamLeaderboards />
