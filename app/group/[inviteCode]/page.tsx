@@ -288,9 +288,26 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
             />
           )}
 
+          {lastSync !== null && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 4 }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 11, color: T.textMuted }}>
+                <span style={{ color: T.wsi, fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>WSI</span>
+                <span>😭 spoon leader</span>
+                <span>😬 shame ↑</span>
+                <span>😌 shame ↓</span>
+                <span style={{ color: T.ci, fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: 4 }}>CI</span>
+                <span>🥳 glory leader</span>
+                <span>🤩 glory ↑</span>
+                <span>😔 glory ↓</span>
+              </div>
+              <div style={{ fontSize: 10, color: T.textFaint, fontStyle: 'italic' }}>
+                Movement emojis reflect today&apos;s standings shift — including being displaced by another team&apos;s result.
+              </div>
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-            <WSILeaderboard entries={leaderboard} showScores={lastSync !== null} />
-            <CILeaderboard  entries={leaderboard} showScores={lastSync !== null} />
+            <WSILeaderboard entries={leaderboard} showScores={lastSync !== null} rankChanges={rankChanges} />
+            <CILeaderboard  entries={leaderboard} showScores={lastSync !== null} rankChanges={rankChanges} />
           </div>
         </>
       )}

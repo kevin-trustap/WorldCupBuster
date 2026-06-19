@@ -5,6 +5,43 @@ import { METRICS, CI_METRICS, type TeamStats, type TeamCIStats } from '@/lib/wsi
 import { T } from '@/lib/theme';
 import type { PublicTeamEntry } from './PublicTeamLeaderboards';
 import type { FixtureDetail } from '@/app/group/[inviteCode]/Leaderboards';
+import { type RankChange } from '@/lib/daily-summary';
+
+function getWSIMoodEmoji(rank: number, rc?: RankChange): string | null {
+  if (rank === 0) return '😭';
+  if (!rc) return null;
+  if (rc.wsiRankBefore > rc.wsiRankAfter) return '😬';
+  if (rc.wsiRankBefore < rc.wsiRankAfter) return '😌';
+  return null;
+}
+
+function getCIMoodEmoji(rank: number, rc?: RankChange): string | null {
+  if (rank === 0) return '🥳';
+  if (!rc) return null;
+  if (rc.ciRankBefore > rc.ciRankAfter) return '🤩';
+  if (rc.ciRankBefore < rc.ciRankAfter) return '😔';
+  return null;
+}
+
+function EmojiLegend() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 11, color: T.textMuted }}>
+        <span style={{ color: T.wsi, fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', alignSelf: 'center' }}>WSI</span>
+        <span>😭 spoon leader</span>
+        <span>😬 shame ↑</span>
+        <span>😌 shame ↓</span>
+        <span style={{ color: T.ci, fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: 4, alignSelf: 'center' }}>CI</span>
+        <span>🥳 glory leader</span>
+        <span>🤩 glory ↑</span>
+        <span>😔 glory ↓</span>
+      </div>
+      <div style={{ fontSize: 10, color: T.textFaint, fontStyle: 'italic' }}>
+        Movement emojis reflect today&apos;s standings shift — including being displaced by another team&apos;s result.
+      </div>
+    </div>
+  );
+}
 
 // ── Fixture attribution helpers ─────────────────────────────────────────────
 function getWSIFixtureLines(key: string, fixtures: FixtureDetail[]): string[] | null {
@@ -166,7 +203,7 @@ function CIBreakdown({ stats, fixtures }: { stats: TeamCIStats; fixtures?: Fixtu
   );
 }
 
-function WSIList({ entries }: { entries: PublicTeamEntry[] }) {
+function WSIList({ entries, rankChanges }: { entries: PublicTeamEntry[]; rankChanges?: Record<number, RankChange> }) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const sorted = [...entries].sort((a, b) => b.wsiScore - a.wsiScore);
   const max = Math.max(...sorted.map(e => e.wsiScore), 1);
@@ -180,6 +217,7 @@ function WSIList({ entries }: { entries: PublicTeamEntry[] }) {
         const pct = Math.round(entry.wsiScore / max * 100);
         const isWorst = rank === 0;
         const expanded = expandedId === entry.teamId;
+        const emoji = getWSIMoodEmoji(rank, rankChanges?.[entry.teamId]);
 
         const rowContent = (
           <div key={entry.teamId} style={{ borderBottom: rank < sorted.length - 1 ? `0.5px solid ${T.divider}` : 'none' }}>
@@ -189,6 +227,7 @@ function WSIList({ entries }: { entries: PublicTeamEntry[] }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: 12, color: T.textMuted, minWidth: 16, textAlign: 'right' }}>{rank + 1}</span>
+                {emoji && <span style={{ fontSize: 14, lineHeight: 1 }}>{emoji}</span>}
                 <span style={{ fontSize: 11, color: T.textFaint }}>{expanded ? '▾' : '▸'}</span>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{entry.flagEmoji}</span>
                 <span style={{ fontSize: 14, fontWeight: isWorst ? 700 : 500, flex: 1, color: T.textPrimary }}>
@@ -226,7 +265,7 @@ function WSIList({ entries }: { entries: PublicTeamEntry[] }) {
   );
 }
 
-function CIList({ entries }: { entries: PublicTeamEntry[] }) {
+function CIList({ entries, rankChanges }: { entries: PublicTeamEntry[]; rankChanges?: Record<number, RankChange> }) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const sorted = [...entries].sort((a, b) => b.ciScore - a.ciScore);
   const max = Math.max(...sorted.map(e => e.ciScore), 1);
@@ -240,6 +279,7 @@ function CIList({ entries }: { entries: PublicTeamEntry[] }) {
         const pct = Math.round(entry.ciScore / max * 100);
         const isTop = rank === 0;
         const expanded = expandedId === entry.teamId;
+        const emoji = getCIMoodEmoji(rank, rankChanges?.[entry.teamId]);
 
         const rowContent = (
           <div key={entry.teamId} style={{ borderBottom: rank < sorted.length - 1 ? `0.5px solid ${T.divider}` : 'none' }}>
@@ -249,6 +289,7 @@ function CIList({ entries }: { entries: PublicTeamEntry[] }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: 12, color: T.textMuted, minWidth: 16, textAlign: 'right' }}>{rank + 1}</span>
+                {emoji && <span style={{ fontSize: 14, lineHeight: 1 }}>{emoji}</span>}
                 <span style={{ fontSize: 11, color: T.textFaint }}>{expanded ? '▾' : '▸'}</span>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{entry.flagEmoji}</span>
                 <span style={{ fontSize: 14, fontWeight: isTop ? 700 : 500, flex: 1, color: T.textPrimary }}>
@@ -286,11 +327,14 @@ function CIList({ entries }: { entries: PublicTeamEntry[] }) {
   );
 }
 
-export default function PublicTeamLeaderboardsClient({ entries }: { entries: PublicTeamEntry[] }) {
+export default function PublicTeamLeaderboardsClient({ entries, rankChanges }: { entries: PublicTeamEntry[]; rankChanges?: Record<number, RankChange> }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-      <WSIList entries={entries} />
-      <CIList entries={entries} />
-    </div>
+    <>
+      <EmojiLegend />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+        <WSIList entries={entries} rankChanges={rankChanges} />
+        <CIList  entries={entries} rankChanges={rankChanges} />
+      </div>
+    </>
   );
 }

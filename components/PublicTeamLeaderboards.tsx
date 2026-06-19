@@ -3,6 +3,7 @@ import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import PublicTeamLeaderboardsClient from './PublicTeamLeaderboardsClient';
 import type { FixtureDetail } from '@/app/group/[inviteCode]/Leaderboards';
+import { getPublicDailyTeamStats, type DailySummaryItem, type RankChange } from '@/lib/daily-summary';
 
 export interface PublicTeamEntry {
   teamId: number;
@@ -14,10 +15,43 @@ export interface PublicTeamEntry {
   fixtures?: FixtureDetail[];
 }
 
+function computePublicRankChanges(
+  entries: PublicTeamEntry[],
+  summaryItems: DailySummaryItem[]
+): Record<number, RankChange> {
+  const wsiDeltaMap = new Map<number, number>();
+  const ciDeltaMap  = new Map<number, number>();
+  for (const item of summaryItems) {
+    for (const team of item.teams) {
+      wsiDeltaMap.set(team.teamId, team.wsiDelta);
+      ciDeltaMap.set(team.teamId,  team.ciDelta);
+    }
+  }
+  const sortedWSIAfter  = [...entries].sort((a, b) => b.wsiScore - a.wsiScore);
+  const sortedCIAfter   = [...entries].sort((a, b) => b.ciScore  - a.ciScore);
+  const sortedWSIBefore = [...entries].sort((a, b) =>
+    (b.wsiScore - (wsiDeltaMap.get(b.teamId) ?? 0)) - (a.wsiScore - (wsiDeltaMap.get(a.teamId) ?? 0))
+  );
+  const sortedCIBefore  = [...entries].sort((a, b) =>
+    (b.ciScore  - (ciDeltaMap.get(b.teamId)  ?? 0)) - (a.ciScore  - (ciDeltaMap.get(a.teamId)  ?? 0))
+  );
+  const result: Record<number, RankChange> = {};
+  for (const entry of entries) {
+    result[entry.teamId] = {
+      wsiRankBefore: sortedWSIBefore.findIndex(e => e.teamId === entry.teamId) + 1,
+      wsiRankAfter:  sortedWSIAfter.findIndex(e => e.teamId === entry.teamId) + 1,
+      ciRankBefore:  sortedCIBefore.findIndex(e => e.teamId === entry.teamId) + 1,
+      ciRankAfter:   sortedCIAfter.findIndex(e => e.teamId === entry.teamId) + 1,
+    };
+  }
+  return result;
+}
+
 export default async function PublicTeamLeaderboards() {
   const supabase = createServerSupabase();
 
-  const [{ data }, { data: fixtureRows }] = await Promise.all([
+  const todayUTCDate = new Date().toISOString().slice(0, 10);
+  const [{ data }, { data: fixtureRows }, dailySummaryItems] = await Promise.all([
     supabase
       .from('wc_teams')
       .select(`id, name, flag_emoji, team_stats(
@@ -34,6 +68,7 @@ export default async function PublicTeamLeaderboards() {
         set_fastgoal, fastgoal_minute, set_fastscored, fastscored_minute,
         fixtures!inner(fixture_id, home_team_id, away_team_id, match_date, round)
       `),
+    getPublicDailyTeamStats(todayUTCDate),
   ]);
 
   if (!data) return null;
@@ -121,7 +156,7 @@ export default async function PublicTeamLeaderboards() {
       <h2 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary, margin: '0 0 16px', letterSpacing: '-0.3px' }}>
         Tournament Standings
       </h2>
-      <PublicTeamLeaderboardsClient entries={entries} />
+      <PublicTeamLeaderboardsClient entries={entries} rankChanges={computePublicRankChanges(entries, dailySummaryItems)} />
     </div>
   );
 }

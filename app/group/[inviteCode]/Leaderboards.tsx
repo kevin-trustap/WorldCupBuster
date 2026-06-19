@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { METRICS, CI_METRICS, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
+import { type RankChange } from '@/lib/daily-summary';
 
 export interface FixtureDetail {
   fixtureId: number;
@@ -203,8 +204,25 @@ function CIBreakdown({ stats, fixtures }: { stats: TeamCIStats; fixtures?: Fixtu
   );
 }
 
+// ── Mood emoji helpers ─────────────────────────────────────────────────────
+function getWSIMoodEmoji(rank: number, rc?: RankChange): string | null {
+  if (rank === 0) return '😭';
+  if (!rc) return null;
+  if (rc.wsiRankBefore > rc.wsiRankAfter) return '😬'; // moved up = more shame
+  if (rc.wsiRankBefore < rc.wsiRankAfter) return '😌'; // moved down = less shame
+  return null;
+}
+
+function getCIMoodEmoji(rank: number, rc?: RankChange): string | null {
+  if (rank === 0) return '🥳';
+  if (!rc) return null;
+  if (rc.ciRankBefore > rc.ciRankAfter) return '🤩'; // moved up = more glory
+  if (rc.ciRankBefore < rc.ciRankAfter) return '😔'; // moved down = less glory
+  return null;
+}
+
 // ── WSI Leaderboard ────────────────────────────────────────────────────────
-export function WSILeaderboard({ entries, showScores = true }: { entries: TeamEntry[]; showScores?: boolean }) {
+export function WSILeaderboard({ entries, showScores = true, rankChanges }: { entries: TeamEntry[]; showScores?: boolean; rankChanges?: Record<number, RankChange> }) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const sorted = [...entries].sort((a, b) => b.wsiScore - a.wsiScore);
   const max    = Math.max(...sorted.map(e => e.wsiScore), 1);
@@ -218,6 +236,7 @@ export function WSILeaderboard({ entries, showScores = true }: { entries: TeamEn
         const pct      = showScores ? Math.round(entry.wsiScore / max * 100) : 0;
         const isWorst  = showScores && rank === 0;
         const expanded = expandedId === entry.teamId;
+        const emoji    = showScores ? getWSIMoodEmoji(rank, rankChanges?.[entry.teamId]) : null;
 
         const rowContent = (
           <div key={entry.teamId} style={{ borderBottom: rank < sorted.length - 1 ? `0.5px solid ${T.divider}` : 'none' }}>
@@ -227,6 +246,7 @@ export function WSILeaderboard({ entries, showScores = true }: { entries: TeamEn
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: 12, color: T.textMuted, minWidth: 16, textAlign: 'right' }}>{rank + 1}</span>
+                {emoji && <span style={{ fontSize: 14, lineHeight: 1 }}>{emoji}</span>}
                 {showScores && <span style={{ fontSize: 11, color: T.textFaint }}>{expanded ? '▾' : '▸'}</span>}
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{entry.flagEmoji}</span>
                 <span style={{ fontSize: 14, fontWeight: isWorst ? 700 : 500, flex: 1, color: T.textPrimary }}>
@@ -268,7 +288,7 @@ export function WSILeaderboard({ entries, showScores = true }: { entries: TeamEn
 }
 
 // ── CI Leaderboard ─────────────────────────────────────────────────────────
-export function CILeaderboard({ entries, showScores = true }: { entries: TeamEntry[]; showScores?: boolean }) {
+export function CILeaderboard({ entries, showScores = true, rankChanges }: { entries: TeamEntry[]; showScores?: boolean; rankChanges?: Record<number, RankChange> }) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const sorted = [...entries].sort((a, b) => b.ciScore - a.ciScore);
   const max    = Math.max(...sorted.map(e => e.ciScore), 1);
@@ -282,6 +302,7 @@ export function CILeaderboard({ entries, showScores = true }: { entries: TeamEnt
         const pct      = showScores ? Math.round(entry.ciScore / max * 100) : 0;
         const isTop    = showScores && rank === 0;
         const expanded = expandedId === entry.teamId;
+        const emoji    = showScores ? getCIMoodEmoji(rank, rankChanges?.[entry.teamId]) : null;
 
         const rowContent = (
           <div key={entry.teamId} style={{ borderBottom: rank < sorted.length - 1 ? `0.5px solid ${T.divider}` : 'none' }}>
@@ -291,6 +312,7 @@ export function CILeaderboard({ entries, showScores = true }: { entries: TeamEnt
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: 12, color: T.textMuted, minWidth: 16, textAlign: 'right' }}>{rank + 1}</span>
+                {emoji && <span style={{ fontSize: 14, lineHeight: 1 }}>{emoji}</span>}
                 {showScores && <span style={{ fontSize: 11, color: T.textFaint }}>{expanded ? '▾' : '▸'}</span>}
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{entry.flagEmoji}</span>
                 <span style={{ fontSize: 14, fontWeight: isTop ? 700 : 500, flex: 1, color: T.textPrimary }}>
