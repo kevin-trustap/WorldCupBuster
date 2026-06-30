@@ -209,28 +209,21 @@ async function processFixture(
     : null;
 
   // ── Home team update ─────────────────────────────────────────────────────
+  // CI metrics — always update (all rounds)
   const homeUpdate: Record<string, number | boolean | string> = {
-    conceded:      homeStats.conceded + awayGoals,
-    og:            homeStats.og + awayEvts.ownGoalsCount,
-    yellows:       homeStats.yellows + homeEvts.yellowCount,
-    reds:          homeStats.reds + homeEvts.redCount,
-    penmiss:       homeStats.penmiss + homeEvts.penMissCount,
-    scored:        homeStats.scored + homeGoals,
-    penscored:     homeStats.penscored + homeEvts.penGoalCount,
-    cleansheets:   homeStats.cleansheets + (awayGoals === 0 ? 1 : 0),
-    shotsontarget: homeStats.shotsontarget + homeSoT,
-    gd:            homeStats.gd + (homeGoals - awayGoals),
-    posgd:         Math.max(0, homeStats.gd + (homeGoals - awayGoals)),
+    scored:         homeStats.scored + homeGoals,
+    penscored:      homeStats.penscored + homeEvts.penGoalCount,
+    cleansheets:    homeStats.cleansheets + (awayGoals === 0 ? 1 : 0),
+    shotsontarget:  homeStats.shotsontarget + homeSoT,
     matches_played: homeStats.matches_played + 1,
     last_synced_at: new Date().toISOString(),
   };
 
-  const homeSetBigdefeat = margin > homeStats.bigdefeat && !homeWon;
-  const homeSetBigwin    = homeWon && margin > homeStats.bigwin;
-  if (homeSetBigdefeat) homeUpdate.bigdefeat = margin;
-  if (homeSetBigwin)    homeUpdate.bigwin    = margin;
+  // bigwin is CI — all rounds
+  const homeSetBigwin = homeWon && margin > homeStats.bigwin;
+  if (homeSetBigwin) homeUpdate.bigwin = margin;
 
-  // Fastest goal conceded = goals that entered home net
+  // Fastest goal conceded (always compute for fixture_team_stats record)
   const concededTimes = [
     ...awayEvts.goalTimesScored, // away normal goals conceded by home
     ...awayEvts.ownGoalTimes,   // own goals benefiting away = committed by home = entered home net
@@ -240,13 +233,14 @@ async function processFixture(
   if (concededTimes.length > 0) {
     const earliest = Math.min(...concededTimes);
     homeEarliestConceded = earliest;
-    if (earliest < homeStats.fastgoal) {
+    // WSI — only update fastgoal for group stage
+    if (groupStage && earliest < homeStats.fastgoal) {
       homeUpdate.fastgoal = earliest;
       homeSetFastgoal = true;
     }
   }
 
-  // Fastest goal scored (home team's goals = their normal + opponent own goals that benefited them)
+  // Fastest goal scored (CI — all rounds)
   const allHomeGoalTimes = [
     ...homeEvts.goalTimesScored,
     ...homeEvts.ownGoalTimes,   // own goal times where team.id=home = benefited home
@@ -260,6 +254,19 @@ async function processFixture(
       homeUpdate.fastscored = earliest;
       homeSetFastscored = true;
     }
+  }
+
+  // WSI metrics — group stage only
+  const homeSetBigdefeat = margin > homeStats.bigdefeat && !homeWon;
+  if (groupStage) {
+    homeUpdate.conceded = homeStats.conceded + awayGoals;
+    homeUpdate.og       = homeStats.og + awayEvts.ownGoalsCount;
+    homeUpdate.yellows  = homeStats.yellows + homeEvts.yellowCount;
+    homeUpdate.reds     = homeStats.reds + homeEvts.redCount;
+    homeUpdate.penmiss  = homeStats.penmiss + homeEvts.penMissCount;
+    homeUpdate.gd       = homeStats.gd + (homeGoals - awayGoals);
+    homeUpdate.posgd    = Math.max(0, homeStats.gd + (homeGoals - awayGoals));
+    if (homeSetBigdefeat) homeUpdate.bigdefeat = margin;
   }
 
   // Group stage points (frozen after 3 matches)
@@ -282,27 +289,21 @@ async function processFixture(
   }
 
   // ── Away team update ─────────────────────────────────────────────────────
+  // CI metrics — always update (all rounds)
   const awayUpdate: Record<string, number | boolean | string> = {
-    conceded:      awayStats.conceded + homeGoals,
-    og:            awayStats.og + homeEvts.ownGoalsCount,
-    yellows:       awayStats.yellows + awayEvts.yellowCount,
-    reds:          awayStats.reds + awayEvts.redCount,
-    penmiss:       awayStats.penmiss + awayEvts.penMissCount,
-    scored:        awayStats.scored + awayGoals,
-    penscored:     awayStats.penscored + awayEvts.penGoalCount,
-    cleansheets:   awayStats.cleansheets + (homeGoals === 0 ? 1 : 0),
-    shotsontarget: awayStats.shotsontarget + awaySoT,
-    gd:            awayStats.gd + (awayGoals - homeGoals),
-    posgd:         Math.max(0, awayStats.gd + (awayGoals - homeGoals)),
+    scored:         awayStats.scored + awayGoals,
+    penscored:      awayStats.penscored + awayEvts.penGoalCount,
+    cleansheets:    awayStats.cleansheets + (homeGoals === 0 ? 1 : 0),
+    shotsontarget:  awayStats.shotsontarget + awaySoT,
     matches_played: awayStats.matches_played + 1,
     last_synced_at: new Date().toISOString(),
   };
 
-  const awaySetBigdefeat = margin > awayStats.bigdefeat && !awayWon;
-  const awaySetBigwin    = awayWon && margin > awayStats.bigwin;
-  if (awaySetBigdefeat) awayUpdate.bigdefeat = margin;
-  if (awaySetBigwin)    awayUpdate.bigwin    = margin;
+  // bigwin is CI — all rounds
+  const awaySetBigwin = awayWon && margin > awayStats.bigwin;
+  if (awaySetBigwin) awayUpdate.bigwin = margin;
 
+  // Fastest goal conceded (always compute for fixture_team_stats record)
   const awayConcededTimes = [
     ...homeEvts.goalTimesScored,
     ...homeEvts.ownGoalTimes,  // own goals benefiting home = committed by away = entered away net
@@ -312,12 +313,14 @@ async function processFixture(
   if (awayConcededTimes.length > 0) {
     const earliest = Math.min(...awayConcededTimes);
     awayEarliestConceded = earliest;
-    if (earliest < awayStats.fastgoal) {
+    // WSI — only update fastgoal for group stage
+    if (groupStage && earliest < awayStats.fastgoal) {
       awayUpdate.fastgoal = earliest;
       awaySetFastgoal = true;
     }
   }
 
+  // Fastest goal scored (CI — all rounds)
   const allAwayGoalTimes = [
     ...awayEvts.goalTimesScored,
     ...awayEvts.ownGoalTimes,  // own goals benefiting away = entered away's opponent's net
@@ -331,6 +334,19 @@ async function processFixture(
       awayUpdate.fastscored = earliest;
       awaySetFastscored = true;
     }
+  }
+
+  // WSI metrics — group stage only
+  const awaySetBigdefeat = margin > awayStats.bigdefeat && !awayWon;
+  if (groupStage) {
+    awayUpdate.conceded = awayStats.conceded + homeGoals;
+    awayUpdate.og       = awayStats.og + homeEvts.ownGoalsCount;
+    awayUpdate.yellows  = awayStats.yellows + awayEvts.yellowCount;
+    awayUpdate.reds     = awayStats.reds + awayEvts.redCount;
+    awayUpdate.penmiss  = awayStats.penmiss + awayEvts.penMissCount;
+    awayUpdate.gd       = awayStats.gd + (awayGoals - homeGoals);
+    awayUpdate.posgd    = Math.max(0, awayStats.gd + (awayGoals - homeGoals));
+    if (awaySetBigdefeat) awayUpdate.bigdefeat = margin;
   }
 
   let awayMatchPts = 0;
@@ -380,7 +396,7 @@ async function processFixture(
     {
       fixture_id:       fixture.fixture.id,
       team_id:          homeId,
-      wsi_delta:        homeWSIDelta,
+      wsi_delta:        groupStage ? homeWSIDelta : 0,
       ci_delta:         homeCIDelta,
       goals_for:        homeGoals,
       goals_against:    awayGoals,
@@ -404,7 +420,7 @@ async function processFixture(
     {
       fixture_id:       fixture.fixture.id,
       team_id:          awayId,
-      wsi_delta:        awayWSIDelta,
+      wsi_delta:        groupStage ? awayWSIDelta : 0,
       ci_delta:         awayCIDelta,
       goals_for:        awayGoals,
       goals_against:    homeGoals,
