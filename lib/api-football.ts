@@ -78,7 +78,7 @@ export async function fetchTeams(): Promise<ApiTeam[]> {
 
 export async function fetchCompletedFixtures(): Promise<ApiFixture[]> {
   const data = await apiFetch<{ response: ApiFixture[] }>(
-    `/fixtures?league=${LEAGUE_ID}&season=${SEASON}&status=FT`
+    `/fixtures?league=${LEAGUE_ID}&season=${SEASON}&status=FT-AET-PEN`
   );
   return data.response;
 }

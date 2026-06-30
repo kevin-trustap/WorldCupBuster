@@ -104,7 +104,8 @@ export async function POST(req: NextRequest) {
     apiCalls++;
 
     // Filter to WC fixtures only
-    const wcFixtures = allFixtures.filter(f => f.fixture.status.short === 'FT');
+    const COMPLETED_STATUSES = ['FT', 'AET', 'PEN'];
+    const wcFixtures = allFixtures.filter(f => COMPLETED_STATUSES.includes(f.fixture.status.short));
 
     // Get already-processed IDs
     const { data: processed } = await supabase
@@ -188,6 +189,11 @@ async function processFixture(
   const homeEvts = parseTeamEvents(events, homeApiId);
   const awayEvts = parseTeamEvents(events, awayApiId);
 
+  // Subtract PSO penalty goals so they don't count toward CI penscored
+  const isPSO = fixture.fixture.status.short === 'PEN';
+  const psoHomeGoals = isPSO ? (fixture.score.penalty?.home ?? 0) : 0;
+  const psoAwayGoals = isPSO ? (fixture.score.penalty?.away ?? 0) : 0;
+
   // Shots on target from statistics
   const homeSoT = getShotsOnTarget(statistics, homeApiId);
   const awaySoT = getShotsOnTarget(statistics, awayApiId);
@@ -212,7 +218,7 @@ async function processFixture(
   // CI metrics — always update (all rounds)
   const homeUpdate: Record<string, number | boolean | string> = {
     scored:         homeStats.scored + homeGoals,
-    penscored:      homeStats.penscored + homeEvts.penGoalCount,
+    penscored:      homeStats.penscored + Math.max(0, homeEvts.penGoalCount - psoHomeGoals),
     cleansheets:    homeStats.cleansheets + (awayGoals === 0 ? 1 : 0),
     shotsontarget:  homeStats.shotsontarget + homeSoT,
     matches_played: homeStats.matches_played + 1,
@@ -292,7 +298,7 @@ async function processFixture(
   // CI metrics — always update (all rounds)
   const awayUpdate: Record<string, number | boolean | string> = {
     scored:         awayStats.scored + awayGoals,
-    penscored:      awayStats.penscored + awayEvts.penGoalCount,
+    penscored:      awayStats.penscored + Math.max(0, awayEvts.penGoalCount - psoAwayGoals),
     cleansheets:    awayStats.cleansheets + (homeGoals === 0 ? 1 : 0),
     shotsontarget:  awayStats.shotsontarget + awaySoT,
     matches_played: awayStats.matches_played + 1,
