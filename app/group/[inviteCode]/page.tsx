@@ -6,7 +6,7 @@ import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry, type FixtureDetail } from './Leaderboards';
 import DailySummary from '@/components/DailySummary';
 import StatLeaders from '@/components/StatLeaders';
-import PlayerAwards, { type PlayerAwardDisplayRow, type GoldenGloveTeam, type AwardCategory } from '@/components/PlayerAwards';
+import PlayerAwards, { type PlayerAwardDisplayRow, type AwardCategory } from '@/components/PlayerAwards';
 import PageNav from '@/components/PageNav';
 import ScrollToTop from '@/components/ScrollToTop';
 import { getDailySummary, getTodaysFixtures, computeRankChanges } from '@/lib/daily-summary';
@@ -157,8 +157,10 @@ async function getPlayerAwards(
 
   const { data: awards } = await supabase
     .from('player_awards')
-    .select('category, player_name, nationality, api_team_id, team_name, stat_value')
-    .eq('rank', 1);
+    .select('category, rank, player_name, nationality, api_team_id, team_name, stat_value')
+    .lte('rank', 3)
+    .order('category')
+    .order('rank');
 
   if (!awards?.length) return [];
 
@@ -180,6 +182,7 @@ async function getPlayerAwards(
     const wcTeam = teamByApiId.get(a.api_team_id);
     return {
       category:    a.category as AwardCategory,
+      rank:        a.rank,
       player_name: a.player_name,
       nationality: a.nationality ?? null,
       team_name:   a.team_name,
@@ -212,21 +215,10 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
     : [[], []];
   const rankChanges = computeRankChanges(leaderboard, dailySummaryItems);
 
-  // Player awards + golden glove
+  // Player awards
   const playerAwards = group.assignment_done && lastSync !== null
     ? await getPlayerAwards(leaderboard)
     : [];
-
-  const goldenGlove: GoldenGloveTeam | null = leaderboard.length > 0
-    ? (() => {
-        const best = leaderboard.reduce((b, t) =>
-          t.stats.cleansheets > b.stats.cleansheets ? t : b
-        );
-        return best.stats.cleansheets > 0
-          ? { team_name: best.teamName, flag_emoji: best.flagEmoji, cleansheets: best.stats.cleansheets, member_name: best.memberName ?? null }
-          : null;
-      })()
-    : null;
 
   const tournamentStart = new Date('2026-06-11');
   const now = new Date();
@@ -389,9 +381,9 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
               <StatLeaders teams={leaderboard} />
             </div>
           )}
-          {lastSync !== null && (playerAwards.length > 0 || goldenGlove !== null) && (
+          {lastSync !== null && playerAwards.length > 0 && (
             <div id="player-awards">
-              <PlayerAwards awards={playerAwards} goldenGlove={goldenGlove} />
+              <PlayerAwards awards={playerAwards} />
             </div>
           )}
         </>

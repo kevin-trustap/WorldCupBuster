@@ -3,7 +3,7 @@ import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import PublicTeamLeaderboardsClient from './PublicTeamLeaderboardsClient';
 import StatLeaders from './StatLeaders';
-import PlayerAwards, { type PlayerAwardDisplayRow, type GoldenGloveTeam, type AwardCategory } from './PlayerAwards';
+import PlayerAwards, { type PlayerAwardDisplayRow, type AwardCategory } from './PlayerAwards';
 import type { FixtureDetail } from '@/app/group/[inviteCode]/Leaderboards';
 import { getPublicDailyTeamStats, type DailySummaryItem, type RankChange } from '@/lib/daily-summary';
 
@@ -73,8 +73,10 @@ export default async function PublicTeamLeaderboards() {
     getPublicDailyTeamStats(todayUTCDate),
     supabase
       .from('player_awards')
-      .select('category, player_name, nationality, api_team_id, team_name, stat_value')
-      .eq('rank', 1),
+      .select('category, rank, player_name, nationality, api_team_id, team_name, stat_value')
+      .lte('rank', 3)
+      .order('category')
+      .order('rank'),
   ]);
 
   if (!data) return null;
@@ -150,6 +152,7 @@ export default async function PublicTeamLeaderboards() {
 
   const awards: PlayerAwardDisplayRow[] = (rawAwards ?? []).map(a => ({
     category:    a.category as AwardCategory,
+    rank:        a.rank,
     player_name: a.player_name,
     nationality: a.nationality ?? null,
     team_name:   a.team_name,
@@ -157,14 +160,6 @@ export default async function PublicTeamLeaderboards() {
     stat_value:  a.stat_value,
     member_name: null,
   }));
-
-  // Golden Glove: team with most clean sheets globally
-  const topCsEntry = entries.length > 0
-    ? entries.reduce((best, t) => t.stats.cleansheets > best.stats.cleansheets ? t : best)
-    : null;
-  const goldenGlove: GoldenGloveTeam | null = topCsEntry && topCsEntry.stats.cleansheets > 0
-    ? { team_name: topCsEntry.teamName, flag_emoji: topCsEntry.flagEmoji, cleansheets: topCsEntry.stats.cleansheets, member_name: null }
-    : null;
 
   if (entries.length === 0) {
     return (
@@ -193,9 +188,9 @@ export default async function PublicTeamLeaderboards() {
       <div id="stat-leaders">
         <StatLeaders teams={entries} />
       </div>
-      {(awards.length > 0 || goldenGlove !== null) && (
+      {awards.length > 0 && (
         <div id="player-awards">
-          <PlayerAwards awards={awards} goldenGlove={goldenGlove} />
+          <PlayerAwards awards={awards} />
         </div>
       )}
     </>
