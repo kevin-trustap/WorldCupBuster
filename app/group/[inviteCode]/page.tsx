@@ -6,6 +6,8 @@ import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry, type FixtureDetail } from './Leaderboards';
 import DailySummary from '@/components/DailySummary';
 import StatLeaders from '@/components/StatLeaders';
+import PageNav from '@/components/PageNav';
+import ScrollToTop from '@/components/ScrollToTop';
 import { getDailySummary, getTodaysFixtures, computeRankChanges } from '@/lib/daily-summary';
 
 export const revalidate = 60; // re-fetch every 60 seconds
@@ -205,6 +207,16 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
         </div>
       </div>
 
+      {/* Sticky section nav — shown once synced */}
+      {lastSync !== null && group.assignment_done && (
+        <PageNav sections={[
+          { id: 'today',        icon: '📅', label: 'Today'     },
+          { id: 'standings',    icon: '🏆', label: 'Standings' },
+          { id: 'stat-leaders', icon: '📊', label: 'Stats'     },
+          { id: 'scoring',      icon: '📋', label: 'Scoring'   },
+        ]} />
+      )}
+
       {/* State 1: Solo — first member, no assignment */}
       {!group.assignment_done && members.length <= 1 && (
         <div style={{ background: T.card, border: `0.5px solid ${T.cardBorder}`, borderRadius: 14, padding: '32px 24px', marginBottom: 20, textAlign: 'center' }}>
@@ -280,13 +292,15 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
 
           {/* Daily summary */}
           {lastSync !== null && (
-            <DailySummary
-              fixtures={todaysFixtures}
-              items={dailySummaryItems}
-              rankChanges={rankChanges}
-              date={todayUTCDate}
-              groupId={group.id}
-            />
+            <div id="today">
+              <DailySummary
+                fixtures={todaysFixtures}
+                items={dailySummaryItems}
+                rankChanges={rankChanges}
+                date={todayUTCDate}
+                groupId={group.id}
+              />
+            </div>
           )}
 
           {lastSync !== null && (
@@ -306,11 +320,15 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
               </div>
             </div>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+          <div id="standings" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
             <WSILeaderboard entries={leaderboard} showScores={lastSync !== null} rankChanges={rankChanges} />
             <CILeaderboard  entries={leaderboard} showScores={lastSync !== null} rankChanges={rankChanges} />
           </div>
-          {lastSync !== null && <StatLeaders teams={leaderboard} />}
+          {lastSync !== null && (
+            <div id="stat-leaders">
+              <StatLeaders teams={leaderboard} />
+            </div>
+          )}
         </>
       )}
 
@@ -320,7 +338,11 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
       </p>
 
       {/* Scoring breakdown — always visible */}
-      <ScoringBreakdown />
+      <div id="scoring">
+        <ScoringBreakdown />
+      </div>
+
+      <ScrollToTop />
     </div>
   );
 }

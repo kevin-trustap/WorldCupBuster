@@ -2,6 +2,8 @@ import { T } from '@/lib/theme';
 import HomePageForms from './HomePageForms';
 import TodaysSummaryPublic from './TodaysSummaryPublic';
 import PublicTeamLeaderboards from '@/components/PublicTeamLeaderboards';
+import PageNav from '@/components/PageNav';
+import ScrollToTop from '@/components/ScrollToTop';
 
 export const revalidate = 60;
 
@@ -9,6 +11,15 @@ export const revalidate = 60;
 export default function HomePage() {
   return (
     <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 16px', fontFamily: 'system-ui, sans-serif' }}>
+
+      {/* Section nav */}
+      <PageNav sections={[
+        { id: 'today',        icon: '📅', label: 'Today'     },
+        { id: 'standings',    icon: '📊', label: 'Standings' },
+        { id: 'stat-leaders', icon: '🥇', label: 'Stats'     },
+        { id: 'create',       icon: '🌍', label: 'Create'    },
+        { id: 'join',         icon: '🎟️', label: 'Join'      },
+      ]} />
 
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -36,7 +47,9 @@ export default function HomePage() {
       </div>
 
       {/* Today's summary — match results + WSI/CI team impact */}
-      <TodaysSummaryPublic />
+      <div id="today">
+        <TodaysSummaryPublic />
+      </div>
 
       {/* Public team standings — team-only, no group/member data */}
       <PublicTeamLeaderboards />
@@ -44,6 +57,7 @@ export default function HomePage() {
       {/* Client forms + trophy cards + how it works */}
       <HomePageForms />
 
+      <ScrollToTop />
     </div>
   );
 }

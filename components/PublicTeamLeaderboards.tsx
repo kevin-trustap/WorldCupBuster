@@ -138,7 +138,7 @@ export default async function PublicTeamLeaderboards() {
 
   if (entries.length === 0) {
     return (
-      <div style={{ marginBottom: 40 }}>
+      <div id="standings" style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary, margin: '0 0 16px', letterSpacing: '-0.3px' }}>
           Tournament Standings
         </h2>
@@ -153,12 +153,16 @@ export default async function PublicTeamLeaderboards() {
   }
 
   return (
-    <div style={{ marginBottom: 40 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary, margin: '0 0 16px', letterSpacing: '-0.3px' }}>
-        Tournament Standings
-      </h2>
-      <PublicTeamLeaderboardsClient entries={entries} rankChanges={computePublicRankChanges(entries, dailySummaryItems)} />
-      <StatLeaders teams={entries} />
-    </div>
+    <>
+      <div id="standings" style={{ marginBottom: 40 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary, margin: '0 0 16px', letterSpacing: '-0.3px' }}>
+          Tournament Standings
+        </h2>
+        <PublicTeamLeaderboardsClient entries={entries} rankChanges={computePublicRankChanges(entries, dailySummaryItems)} />
+      </div>
+      <div id="stat-leaders">
+        <StatLeaders teams={entries} />
+      </div>
+    </>
   );
 }
