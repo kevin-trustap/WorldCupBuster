@@ -5,6 +5,7 @@ import {
   fetchCompletedFixtures,
   fetchFixtureEvents,
   fetchFixtureStatistics,
+  fetchPlayerAwards,
   parseTeamEvents,
   getShotsOnTarget,
   getRoundOrdinal,
@@ -12,6 +13,7 @@ import {
   type ApiFixture,
   type ApiEvent,
   type ApiStatTeam,
+  type AwardCategory,
 } from '@/lib/api-football';
 import { API_NAME_OVERRIDES } from '@/constants/wc2026';
 import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
@@ -136,6 +138,25 @@ export async function POST(req: NextRequest) {
         .insert({ fixture_id: fixture.fixture.id });
 
       fixturesProcessed++;
+    }
+
+    // ── Player awards (4 calls, once per sync) ─────────────────────────────
+    if (unmapped.length === 0 && usedToday + apiCalls + 4 <= DAILY_CALL_LIMIT) {
+      const AWARD_CATEGORIES: AwardCategory[] = [
+        'topscorers', 'topassists', 'topyellowcards', 'topredcards',
+      ];
+      for (const category of AWARD_CATEGORIES) {
+        const entries = await fetchPlayerAwards(category);
+        apiCalls++;
+        const top5 = entries.slice(0, 5);
+        if (top5.length === 0) continue;
+        await supabase
+          .from('player_awards')
+          .upsert(
+            top5.map(e => ({ ...e, synced_at: new Date().toISOString() })),
+            { onConflict: 'category,rank' }
+          );
+      }
     }
 
     // ── Complete sync log ───────────────────────────────────────────────────

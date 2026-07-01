@@ -14,11 +14,12 @@ export default function HomePage() {
 
       {/* Section nav */}
       <PageNav sections={[
-        { id: 'today',        icon: '📅', label: 'Today'     },
-        { id: 'standings',    icon: '📊', label: 'Standings' },
-        { id: 'stat-leaders', icon: '🥇', label: 'Stats'     },
-        { id: 'create',       icon: '🌍', label: 'Create'    },
-        { id: 'join',         icon: '🎟️', label: 'Join'      },
+        { id: 'today',         icon: '📅', label: 'Today'    },
+        { id: 'standings',     icon: '📊', label: 'Standings'},
+        { id: 'stat-leaders',  icon: '🥇', label: 'Stats'    },
+        { id: 'player-awards', icon: '🏅', label: 'Awards'   },
+        { id: 'create',        icon: '🌍', label: 'Create'   },
+        { id: 'join',          icon: '🎟️', label: 'Join'     },
       ]} />
 
       {/* Hero */}

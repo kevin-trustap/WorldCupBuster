@@ -6,6 +6,7 @@ import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry, type FixtureDetail } from './Leaderboards';
 import DailySummary from '@/components/DailySummary';
 import StatLeaders from '@/components/StatLeaders';
+import PlayerAwards, { type PlayerAwardDisplayRow, type GoldenGloveTeam, type AwardCategory } from '@/components/PlayerAwards';
 import PageNav from '@/components/PageNav';
 import ScrollToTop from '@/components/ScrollToTop';
 import { getDailySummary, getTodaysFixtures, computeRankChanges } from '@/lib/daily-summary';
@@ -148,6 +149,47 @@ async function getLastSync() {
   return data?.completed_at ?? null;
 }
 
+// ── Player awards helper ────────────────────────────────────────────────────
+async function getPlayerAwards(
+  leaderboard: TeamEntry[]
+): Promise<PlayerAwardDisplayRow[]> {
+  const supabase = createServerSupabase();
+
+  const { data: awards } = await supabase
+    .from('player_awards')
+    .select('category, player_name, nationality, api_team_id, team_name, stat_value')
+    .eq('rank', 1);
+
+  if (!awards?.length) return [];
+
+  const { data: wcTeams } = await supabase
+    .from('wc_teams')
+    .select('id, api_team_id, flag_emoji');
+
+  const teamByApiId = new Map<number, { id: number; flag_emoji: string }>(
+    (wcTeams ?? [])
+      .filter(t => t.api_team_id != null)
+      .map(t => [t.api_team_id as number, { id: t.id, flag_emoji: t.flag_emoji ?? '🏳' }])
+  );
+
+  const memberByTeamId = new Map<number, string>(
+    leaderboard.map(e => [e.teamId, e.memberName ?? ''])
+  );
+
+  return awards.map(a => {
+    const wcTeam = teamByApiId.get(a.api_team_id);
+    return {
+      category:    a.category as AwardCategory,
+      player_name: a.player_name,
+      nationality: a.nationality ?? null,
+      team_name:   a.team_name,
+      flag_emoji:  wcTeam?.flag_emoji ?? '🏳',
+      stat_value:  a.stat_value,
+      member_name: wcTeam ? (memberByTeamId.get(wcTeam.id) ?? null) : null,
+    };
+  });
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 export default async function GroupPage({ params }: { params: { inviteCode: string } }) {
   const todayUTCDate = new Date().toISOString().split('T')[0];
@@ -169,6 +211,23 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
       ])
     : [[], []];
   const rankChanges = computeRankChanges(leaderboard, dailySummaryItems);
+
+  // Player awards + golden glove
+  const playerAwards = group.assignment_done && lastSync !== null
+    ? await getPlayerAwards(leaderboard)
+    : [];
+
+  const goldenGlove: GoldenGloveTeam | null = leaderboard.length > 0
+    ? (() => {
+        const best = leaderboard.reduce((b, t) =>
+          t.stats.cleansheets > b.stats.cleansheets ? t : b
+        );
+        return best.stats.cleansheets > 0
+          ? { team_name: best.teamName, flag_emoji: best.flagEmoji, cleansheets: best.stats.cleansheets, member_name: best.memberName ?? null }
+          : null;
+      })()
+    : null;
+
   const tournamentStart = new Date('2026-06-11');
   const now = new Date();
   const preTournament = now < tournamentStart;
@@ -210,10 +269,11 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
       {/* Sticky section nav — shown once synced */}
       {lastSync !== null && group.assignment_done && (
         <PageNav sections={[
-          { id: 'today',        icon: '📅', label: 'Today'     },
-          { id: 'standings',    icon: '🏆', label: 'Standings' },
-          { id: 'stat-leaders', icon: '📊', label: 'Stats'     },
-          { id: 'scoring',      icon: '📋', label: 'Scoring'   },
+          { id: 'today',         icon: '📅', label: 'Today'     },
+          { id: 'standings',     icon: '🏆', label: 'Standings' },
+          { id: 'stat-leaders',  icon: '📊', label: 'Stats'     },
+          { id: 'player-awards', icon: '🏅', label: 'Awards'    },
+          { id: 'scoring',       icon: '📋', label: 'Scoring'   },
         ]} />
       )}
 
@@ -327,6 +387,11 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
           {lastSync !== null && (
             <div id="stat-leaders">
               <StatLeaders teams={leaderboard} />
+            </div>
+          )}
+          {lastSync !== null && (playerAwards.length > 0 || goldenGlove !== null) && (
+            <div id="player-awards">
+              <PlayerAwards awards={playerAwards} goldenGlove={goldenGlove} />
             </div>
           )}
         </>

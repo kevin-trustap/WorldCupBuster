@@ -234,3 +234,21 @@ ALTER TABLE fixture_team_stats ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "public_read_fixtures"           ON fixtures           FOR SELECT USING (TRUE);
 CREATE POLICY "public_read_fixture_team_stats" ON fixture_team_stats FOR SELECT USING (TRUE);
+
+-- ── Player awards ───────────────────────────────────────────────────────────
+CREATE TABLE player_awards (
+  id          SERIAL PRIMARY KEY,
+  category    TEXT    NOT NULL,   -- 'topscorers' | 'topassists' | 'topyellowcards' | 'topredcards'
+  rank        INTEGER NOT NULL,   -- 1-based (1 = leader)
+  player_id   INTEGER NOT NULL,   -- API-Football player ID
+  player_name TEXT    NOT NULL,
+  nationality TEXT,
+  api_team_id INTEGER NOT NULL,   -- API-Football team ID; join to wc_teams.api_team_id
+  team_name   TEXT    NOT NULL,   -- denormalised fallback
+  stat_value  INTEGER NOT NULL DEFAULT 0,
+  appearances INTEGER NOT NULL DEFAULT 0,
+  synced_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(category, rank)
+);
+ALTER TABLE player_awards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_player_awards" ON player_awards FOR SELECT USING (TRUE);

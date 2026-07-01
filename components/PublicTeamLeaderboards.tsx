@@ -3,6 +3,7 @@ import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import PublicTeamLeaderboardsClient from './PublicTeamLeaderboardsClient';
 import StatLeaders from './StatLeaders';
+import PlayerAwards, { type PlayerAwardDisplayRow, type GoldenGloveTeam, type AwardCategory } from './PlayerAwards';
 import type { FixtureDetail } from '@/app/group/[inviteCode]/Leaderboards';
 import { getPublicDailyTeamStats, type DailySummaryItem, type RankChange } from '@/lib/daily-summary';
 
@@ -52,10 +53,10 @@ export default async function PublicTeamLeaderboards() {
   const supabase = createServerSupabase();
 
   const todayUTCDate = new Date().toISOString().slice(0, 10);
-  const [{ data }, { data: fixtureRows }, dailySummaryItems] = await Promise.all([
+  const [{ data }, { data: fixtureRows }, dailySummaryItems, { data: rawAwards }] = await Promise.all([
     supabase
       .from('wc_teams')
-      .select(`id, name, flag_emoji, team_stats(
+      .select(`id, name, flag_emoji, api_team_id, team_stats(
         matches_played, points, conceded, gd, yellows, reds, bigdefeat, og, fastgoal, penmiss,
         pts_group, scored, posgd, stage, bigwin, fastscored, penscored, cleansheets, shotsontarget
       )`),
@@ -70,6 +71,10 @@ export default async function PublicTeamLeaderboards() {
         fixtures!inner(fixture_id, home_team_id, away_team_id, match_date, round)
       `),
     getPublicDailyTeamStats(todayUTCDate),
+    supabase
+      .from('player_awards')
+      .select('category, player_name, nationality, api_team_id, team_name, stat_value')
+      .eq('rank', 1),
   ]);
 
   if (!data) return null;
@@ -136,6 +141,31 @@ export default async function PublicTeamLeaderboards() {
       };
     });
 
+  // ── Player awards data ────────────────────────────────────────────────────
+  const teamByApiId = new Map<number, { flag_emoji: string }>(
+    data
+      .filter(t => t.api_team_id != null)
+      .map(t => [t.api_team_id as number, { flag_emoji: t.flag_emoji ?? '🏳' }])
+  );
+
+  const awards: PlayerAwardDisplayRow[] = (rawAwards ?? []).map(a => ({
+    category:    a.category as AwardCategory,
+    player_name: a.player_name,
+    nationality: a.nationality ?? null,
+    team_name:   a.team_name,
+    flag_emoji:  teamByApiId.get(a.api_team_id)?.flag_emoji ?? '🏳',
+    stat_value:  a.stat_value,
+    member_name: null,
+  }));
+
+  // Golden Glove: team with most clean sheets globally
+  const topCsEntry = entries.length > 0
+    ? entries.reduce((best, t) => t.stats.cleansheets > best.stats.cleansheets ? t : best)
+    : null;
+  const goldenGlove: GoldenGloveTeam | null = topCsEntry && topCsEntry.stats.cleansheets > 0
+    ? { team_name: topCsEntry.teamName, flag_emoji: topCsEntry.flagEmoji, cleansheets: topCsEntry.stats.cleansheets, member_name: null }
+    : null;
+
   if (entries.length === 0) {
     return (
       <div id="standings" style={{ marginBottom: 40 }}>
@@ -163,6 +193,11 @@ export default async function PublicTeamLeaderboards() {
       <div id="stat-leaders">
         <StatLeaders teams={entries} />
       </div>
+      {(awards.length > 0 || goldenGlove !== null) && (
+        <div id="player-awards">
+          <PlayerAwards awards={awards} goldenGlove={goldenGlove} />
+        </div>
+      )}
     </>
   );
 }

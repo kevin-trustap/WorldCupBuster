@@ -68,6 +68,63 @@ export interface ApiStatTeam {
   statistics: Array<{ type: string; value: number | string | null }>;
 }
 
+// ── Player awards ──────────────────────────────────────────────────────────
+
+export type AwardCategory = 'topscorers' | 'topassists' | 'topyellowcards' | 'topredcards';
+
+export interface ParsedPlayerAward {
+  category:    AwardCategory;
+  rank:        number;
+  player_id:   number;
+  player_name: string;
+  nationality: string;
+  api_team_id: number;
+  team_name:   string;
+  stat_value:  number;
+  appearances: number;
+}
+
+interface ApiPlayerEntry {
+  player: { id: number; name: string; nationality: string };
+  statistics: Array<{
+    team:  { id: number; name: string };
+    goals: { total: number | null; assists: number | null };
+    cards: { yellow: number | null; red: number | null };
+    games: { appearences: number | null };   // API typo is intentional
+  }>;
+}
+
+function extractStatValue(entry: ApiPlayerEntry, category: AwardCategory): number {
+  const s = entry.statistics[0];
+  if (!s) return 0;
+  switch (category) {
+    case 'topscorers':     return s.goals.total    ?? 0;
+    case 'topassists':     return s.goals.assists  ?? 0;
+    case 'topyellowcards': return s.cards.yellow   ?? 0;
+    case 'topredcards':    return s.cards.red       ?? 0;
+  }
+}
+
+export async function fetchPlayerAwards(category: AwardCategory): Promise<ParsedPlayerAward[]> {
+  const data = await apiFetch<{ response: ApiPlayerEntry[] }>(
+    `/players/${category}?league=${LEAGUE_ID}&season=${SEASON}`
+  );
+  return data.response.map((entry, i) => {
+    const s = entry.statistics[0];
+    return {
+      category,
+      rank:        i + 1,
+      player_id:   entry.player.id,
+      player_name: entry.player.name,
+      nationality: entry.player.nationality ?? '',
+      api_team_id: s?.team.id    ?? 0,
+      team_name:   s?.team.name  ?? '',
+      stat_value:  extractStatValue(entry, category),
+      appearances: s?.games.appearences ?? 0,
+    };
+  });
+}
+
 // ── Fetch functions ────────────────────────────────────────────────────────
 export async function fetchTeams(): Promise<ApiTeam[]> {
   const data = await apiFetch<{ response: ApiTeam[] }>(
