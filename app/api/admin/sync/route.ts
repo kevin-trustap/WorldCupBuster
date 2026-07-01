@@ -262,6 +262,9 @@ async function processFixture(
     }
   }
 
+  // CI — all rounds, raw GD (compute() handles the floor)
+  homeUpdate.posgd = homeStats.posgd + (homeGoals - awayGoals);
+
   // WSI metrics — group stage only
   const homeSetBigdefeat = margin > homeStats.bigdefeat && !homeWon;
   if (groupStage) {
@@ -271,7 +274,6 @@ async function processFixture(
     homeUpdate.reds     = homeStats.reds + homeEvts.redCount;
     homeUpdate.penmiss  = homeStats.penmiss + homeEvts.penMissCount;
     homeUpdate.gd       = homeStats.gd + (homeGoals - awayGoals);
-    homeUpdate.posgd    = Math.max(0, homeStats.gd + (homeGoals - awayGoals));
     if (homeSetBigdefeat) homeUpdate.bigdefeat = margin;
   }
 
@@ -342,6 +344,9 @@ async function processFixture(
     }
   }
 
+  // CI — all rounds, raw GD (compute() handles the floor)
+  awayUpdate.posgd = awayStats.posgd + (awayGoals - homeGoals);
+
   // WSI metrics — group stage only
   const awaySetBigdefeat = margin > awayStats.bigdefeat && !awayWon;
   if (groupStage) {
@@ -351,7 +356,6 @@ async function processFixture(
     awayUpdate.reds     = awayStats.reds + awayEvts.redCount;
     awayUpdate.penmiss  = awayStats.penmiss + awayEvts.penMissCount;
     awayUpdate.gd       = awayStats.gd + (awayGoals - homeGoals);
-    awayUpdate.posgd    = Math.max(0, awayStats.gd + (awayGoals - homeGoals));
     if (awaySetBigdefeat) awayUpdate.bigdefeat = margin;
   }
 
