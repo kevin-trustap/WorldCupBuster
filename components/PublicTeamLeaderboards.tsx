@@ -2,6 +2,7 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { teamWSI, teamCI, type TeamStats, type TeamCIStats } from '@/lib/wsi';
 import { T } from '@/lib/theme';
 import PublicTeamLeaderboardsClient from './PublicTeamLeaderboardsClient';
+import StatLeaders from './StatLeaders';
 import type { FixtureDetail } from '@/app/group/[inviteCode]/Leaderboards';
 import { getPublicDailyTeamStats, type DailySummaryItem, type RankChange } from '@/lib/daily-summary';
 
@@ -157,6 +158,7 @@ export default async function PublicTeamLeaderboards() {
         Tournament Standings
       </h2>
       <PublicTeamLeaderboardsClient entries={entries} rankChanges={computePublicRankChanges(entries, dailySummaryItems)} />
+      <StatLeaders teams={entries} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { T } from '@/lib/theme';
 import ScoringBreakdown from './ScoringBreakdown';
 import { WSILeaderboard, CILeaderboard, type TeamEntry, type FixtureDetail } from './Leaderboards';
 import DailySummary from '@/components/DailySummary';
+import StatLeaders from '@/components/StatLeaders';
 import { getDailySummary, getTodaysFixtures, computeRankChanges } from '@/lib/daily-summary';
 
 export const revalidate = 60; // re-fetch every 60 seconds
@@ -309,6 +310,7 @@ export default async function GroupPage({ params }: { params: { inviteCode: stri
             <WSILeaderboard entries={leaderboard} showScores={lastSync !== null} rankChanges={rankChanges} />
             <CILeaderboard  entries={leaderboard} showScores={lastSync !== null} rankChanges={rankChanges} />
           </div>
+          {lastSync !== null && <StatLeaders teams={leaderboard} />}
         </>
       )}
 
